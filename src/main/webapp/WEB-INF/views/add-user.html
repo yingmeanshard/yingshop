@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add New User</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h1>Add New User</h1>
+
+    <!-- 表單提交到 /users/save -->
+    <form th:action="@{/users/save}" th:object="${user}" method="post">
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" th:field="*{name}" class="form-control" id="name" placeholder="Enter name" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" th:field="*{email}" class="form-control" id="email" placeholder="Enter email" required>
+        </div>
+
+        <button type="submit" class="btn btn-success">Save</button>
+        <a th:href="@{/users}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+</body>
+</html>
