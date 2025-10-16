@@ -22,9 +22,9 @@ public class UserServiceTest {
        // 確認 userService 被正確注入
        assertTrue("UserService 未注入", userService != null);
        // 執行測試
-       User user = userService.getUserById(6L);
+       User user = userService.getUserById(1L);
        assertNotNull("使用者不存在", user);
-       assertEquals("使用者 ID 不正確", 6, user.getId().longValue());
+       assertEquals("使用者 ID 不正確", 1, user.getId().longValue());
    }
 }
 

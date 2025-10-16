@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- 啟動時印出 Logback 自身狀態（除錯用；確認好後可拿掉） -->
+    <!-- <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener" /> -->
+
+    <!-- 主控台 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!-- 加上 reqId（下一步用 Filter 注入） -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] reqId=%X{requestId} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 每日滾動檔案：寫到 Tomcat logs 下的 yingshop 子資料夾 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${catalina.base}/logs/yingshop/app.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 每日新檔並壓縮 -->
+            <fileNamePattern>${catalina.base}/logs/yingshop/app.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] reqId=%X{requestId} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 想看 service 細節就把 yingshop.service 調成 DEBUG -->
+    <logger name="yingshop.service" level="DEBUG"/>
+
+    <!-- 全域層級 -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+    </root>
+</configuration>
