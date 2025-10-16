@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>商品列表</title>
+    <link rel="stylesheet" th:href="@{/resources/css/style.css}" />
+</head>
+<body>
+<div class="page-header">
+    <h1>商品列表</h1>
+    <a class="primary-button" th:href="@{/products/create}">新增商品</a>
+</div>
+
+<div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+<div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+<form method="get" th:action="@{/products}" class="filter-form">
+    <label for="category">分類：</label>
+    <select id="category" name="category">
+        <option value="" th:selected="${selectedCategory == null || #strings.isEmpty(selectedCategory)}">全部</option>
+        <option th:each="category : ${categories}"
+                th:value="${category}"
+                th:selected="${category == selectedCategory}"
+                th:text="${category}"></option>
+    </select>
+    <button type="submit" class="solid-button">套用</button>
+    <a th:href="@{/products}" class="reset-link">清除</a>
+</form>
+
+<div th:if="${#lists.isEmpty(products)}" class="empty-state">
+    目前沒有符合條件的商品。
+</div>
+
+<div class="product-grid" th:if="${!#lists.isEmpty(products)}">
+    <div class="product-card" th:each="product : ${products}">
+        <div class="product-image">
+            <img th:if="${!#strings.isEmpty(product.imageUrl)}" th:src="${product.imageUrl}" th:alt="${product.name}" />
+            <div th:if="${#strings.isEmpty(product.imageUrl)}" class="image-placeholder">
+                <span>暫無圖片</span>
+            </div>
+        </div>
+        <div class="product-info">
+            <h2 th:text="${product.name}"></h2>
+            <p class="product-category" th:text="${product.category}"></p>
+            <p class="product-price" th:text="${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}"></p>
+        </div>
+        <div class="product-actions">
+            <a class="link-button" th:href="@{'/products/detail/' + ${product.id}}">查看</a>
+            <a class="link-button" th:href="@{'/products/edit/' + ${product.id}}">編輯</a>
+            <a class="link-button danger" th:href="@{'/products/delete/' + ${product.id}}" onclick="return confirm('確定刪除這個商品嗎？');">刪除</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

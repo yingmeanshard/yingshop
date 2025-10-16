@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${formTitle}">商品表單</title>
+    <link rel="stylesheet" th:href="@{/resources/css/style.css}" />
+</head>
+<body>
+<h1 th:text="${formTitle}">商品表單</h1>
+
+<form th:action="${isEdit} ? @{/products/edit/{id}(id=${product.id})} : @{/products/create}"
+      th:object="${product}" method="post" class="product-form">
+    <div class="form-field">
+        <label for="name">名稱</label>
+        <input id="name" type="text" th:field="*{name}" required />
+    </div>
+    <div class="form-field">
+        <label for="category">分類</label>
+        <input id="category" type="text" th:field="*{category}" required />
+    </div>
+    <div class="form-field">
+        <label for="price">價格</label>
+        <input id="price" type="number" step="0.01" min="0" th:field="*{price}" required />
+    </div>
+    <div class="form-field">
+        <label for="description">描述</label>
+        <textarea id="description" th:field="*{description}" rows="4"></textarea>
+    </div>
+    <div class="form-field">
+        <label for="imageUrl">圖片網址</label>
+        <input id="imageUrl" type="text" th:field="*{imageUrl}" />
+    </div>
+
+    <div class="form-actions">
+        <button type="submit">儲存</button>
+        <a th:href="@{/products}">取消</a>
+    </div>
+</form>
+</body>
+</html>
