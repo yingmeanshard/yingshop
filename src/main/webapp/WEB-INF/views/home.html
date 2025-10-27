@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <!-- #{} → 表示「從 MessageSource 取值（國際化訊息）」-->
+    <title th:text="#{home.title}">Welcome</title>
+</head>
+<body>
+    <h1 th:text="#{home.message}">Hello</h1>
+    <button th:text="#{button.save}">Save</button>
+
+    <hr>
+    <a th:href="@{/?lang=en}">English</a> |
+    <a th:href="@{/?lang=zh_TW}">繁體中文</a>
+</body>
+</html>
+
+
+
