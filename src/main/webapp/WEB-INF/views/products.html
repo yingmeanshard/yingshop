@@ -6,10 +6,16 @@
     <link rel="stylesheet" th:href="@{/resources/css/style.css}" />
 </head>
 <body>
-<div class="page-header">
-    <h1>商品列表</h1>
-    <a class="primary-button" th:href="@{/products/create}">新增商品</a>
-</div>
+<header class="storefront-header">
+    <div class="storefront-title">
+        <h1>商品一覽</h1>
+        <p>精選品項，立即選購。</p>
+    </div>
+    <div class="storefront-actions">
+        <a class="primary-button" th:href="@{/products/create}">新增商品</a>
+        <a class="ghost-button" th:href="@{/cart}">查看購物車</a>
+    </div>
+</header>
 
 <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
 <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
@@ -33,21 +39,44 @@
 
 <div class="product-grid" th:if="${!#lists.isEmpty(products)}">
     <div class="product-card" th:each="product : ${products}">
-        <div class="product-image">
-            <img th:if="${!#strings.isEmpty(product.imageUrl)}" th:src="${product.imageUrl}" th:alt="${product.name}" />
-            <div th:if="${#strings.isEmpty(product.imageUrl)}" class="image-placeholder">
-                <span>暫無圖片</span>
+        <a class="product-image-link" th:href="@{'/products/detail/' + ${product.id}}" aria-label="查看商品詳情">
+            <div class="product-image">
+                <img th:if="${!#strings.isEmpty(product.imageUrl)}" th:src="${product.imageUrl}" th:alt="${product.name}" />
+                <div th:if="${#strings.isEmpty(product.imageUrl)}" class="image-placeholder">
+                    <span>暫無圖片</span>
+                </div>
             </div>
-        </div>
-        <div class="product-info">
-            <h2 th:text="${product.name}"></h2>
-            <p class="product-category" th:text="${product.category}"></p>
-            <p class="product-price" th:text="${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}"></p>
-        </div>
-        <div class="product-actions">
-            <a class="link-button" th:href="@{'/products/detail/' + ${product.id}}">查看</a>
-            <a class="link-button" th:href="@{'/products/edit/' + ${product.id}}">編輯</a>
-            <a class="link-button danger" th:href="@{'/products/delete/' + ${product.id}}" onclick="return confirm('確定刪除這個商品嗎？');">刪除</a>
+        </a>
+        <div class="product-body">
+            <div class="product-info">
+                <h2>
+                    <a th:href="@{'/products/detail/' + ${product.id}}" th:text="${product.name}"></a>
+                </h2>
+                <p class="product-category" th:text="${product.category}"></p>
+                <p class="product-price" th:text="${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}"></p>
+                <p class="product-description-snippet"
+                   th:text="${#strings.isEmpty(product.description) ? '此商品尚無描述。' : #strings.abbreviate(product.description, 80)}"></p>
+            </div>
+            <div class="product-footer">
+                <div class="product-purchase">
+                    <a class="ghost-button" th:href="@{'/products/detail/' + ${product.id}}">查看詳情</a>
+                    <form class="cart-action" method="post" th:action="@{'/cart/add/' + ${product.id}}">
+                        <div class="product-quantity">
+                            <button type="button" class="quantity-button" onclick="var input = this.nextElementSibling; if (parseInt(input.value, 10) > 1) { input.stepDown(); }">-</button>
+                            <input type="number" name="quantity" min="1" value="1" class="quantity-input" />
+                            <button type="button" class="quantity-button" onclick="this.previousElementSibling.stepUp();">+</button>
+                        </div>
+                        <input type="hidden" name="redirect"
+                               th:value="${#httpServletRequest.requestURI + (#strings.isEmpty(#httpServletRequest.queryString) ? '' : '?' + #httpServletRequest.queryString)}" />
+                        <button type="submit" class="add-to-cart-button">加入購物車</button>
+                    </form>
+                </div>
+                <div class="product-manage">
+                    <a class="link-button" th:href="@{'/products/edit/' + ${product.id}}">編輯</a>
+                    <a class="link-button danger" th:href="@{'/products/delete/' + ${product.id}}"
+                       onclick="return confirm('確定刪除這個商品嗎？');">刪除</a>
+                </div>
+            </div>
         </div>
     </div>
 </div>

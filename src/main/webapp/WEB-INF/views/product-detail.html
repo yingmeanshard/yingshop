@@ -14,6 +14,9 @@
     </div>
 </div>
 
+<div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+<div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
 <div class="product-detail">
     <div class="product-image">
         <img th:if="${!#strings.isEmpty(product.imageUrl)}" th:src="${product.imageUrl}" th:alt="${product.name}" />
@@ -27,6 +30,18 @@
         <div class="product-description">
             <strong>描述：</strong>
             <p th:text="${product.description}">此商品尚無描述。</p>
+        </div>
+        <div class="detail-purchase-panel">
+            <form class="detail-cart-form" method="post" th:action="@{'/cart/add/' + ${product.id}}">
+                <input type="hidden" name="redirect" th:value="@{'/products/detail/' + ${product.id}}" />
+                <label for="quantity">數量</label>
+                <div class="quantity-control">
+                    <button type="button" class="quantity-button" onclick="var input = this.nextElementSibling; if (input.value > 1) { input.stepDown(); }">-</button>
+                    <input id="quantity" name="quantity" type="number" min="1" value="1" />
+                    <button type="button" class="quantity-button" onclick="this.previousElementSibling.stepUp();">+</button>
+                </div>
+                <button type="submit" class="primary-button add-to-cart-full">加入購物車</button>
+            </form>
         </div>
     </div>
 </div>
