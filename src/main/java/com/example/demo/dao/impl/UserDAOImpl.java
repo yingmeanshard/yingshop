@@ -30,6 +30,14 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
+    public User findByEmail(String email) {
+        return getCurrentSession()
+                .createQuery("FROM User WHERE email = :email", User.class)
+                .setParameter("email", email)
+                .uniqueResult();
+    }
+
+    @Override
     public void save(User user) {
         getCurrentSession().saveOrUpdate(user);
     }

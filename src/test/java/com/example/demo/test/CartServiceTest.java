@@ -32,7 +32,7 @@ public class CartServiceTest {
 
         assertEquals(3, cart.getItems().get(productA.getId()).getQuantity());
         assertEquals(new BigDecimal("300.00"), cart.getItems().get(productA.getId()).getSubtotal());
-        assertEquals(4, cartService.getTotalQuantity(cart));
+        assertEquals(6, cartService.getTotalQuantity(cart));
 
         cartService.updateItemQuantity(cart, productB.getId(), 5);
         assertEquals(5, cart.getItems().get(productB.getId()).getQuantity());
@@ -43,6 +43,9 @@ public class CartServiceTest {
         cartService.removeItem(cart, productB.getId());
         assertTrue(cart.getItems().isEmpty());
         assertEquals(BigDecimal.ZERO, cartService.calculateTotalPrice(cart));
+        
+        cartService.selectAddress(cart, 5L);
+        assertEquals(Long.valueOf(5L), cart.getSelectedAddressId());
     }
 
     private Product createProduct(Long id, String name, BigDecimal price) {

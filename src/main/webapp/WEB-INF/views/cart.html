@@ -1,84 +1,129 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>購物車</title>
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 8px;
-            border: 1px solid #ccc;
-            text-align: left;
-        }
-        .actions {
-            display: flex;
-            gap: 8px;
-        }
-        .total {
-            text-align: right;
-            margin-top: 16px;
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-        .messages {
-            margin-bottom: 16px;
-            color: #1d4ed8;
-        }
-        .error {
-            color: #dc2626;
-        }
-    </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 </head>
-<body>
-<h1>購物車</h1>
-
-<div class="messages" th:if="${successMessage}" th:text="${successMessage}"></div>
-<div class="messages error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
-
-<div th:if="${cart.empty}">
-    <p>您的購物車目前是空的。</p>
-    <a th:href="@{/products}">前往商品列表</a>
-</div>
-
-<div th:if="${!cart.empty}">
-    <table>
-        <thead>
-        <tr>
-            <th>商品名稱</th>
-            <th>單價</th>
-            <th>數量</th>
-            <th>小計</th>
-            <th>操作</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="item : ${items}">
-            <td th:text="${item.name}">商品名稱</td>
-            <td th:text="${#numbers.formatDecimal(item.unitPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
-            <td>
-                <form th:action="@{'/cart/update/' + ${item.productId}}" method="post" class="actions">
-                    <input type="number" name="quantity" min="0" th:value="${item.quantity}">
-                    <button type="submit">更新</button>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">YingShop</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" th:href="@{/}">首頁</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/products}">商品列表</a></li>
+                <li class="nav-item"><a class="nav-link active" th:href="@{/cart}">購物車</a></li>
+                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/account/profile}">個人資料</a></li>
+                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/addresses}">收貨地址</a></li>
+            </ul>
+            <div class="d-flex">
+                <a class="btn btn-outline-light me-2" th:href="@{/login}" sec:authorize="isAnonymous()">登入</a>
+                <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
+                    <button class="btn btn-outline-light" type="submit">登出</button>
                 </form>
-            </td>
-            <td th:text="${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
-            <td>
-                <form th:action="@{'/cart/remove/' + ${item.productId}}" method="post">
-                    <button type="submit">移除</button>
-                </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-
-    <div class="total">
-        總金額：<span th:text="${#numbers.formatDecimal(cart.totalPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+            </div>
+        </div>
     </div>
-</div>
+</nav>
 
-<p><a th:href="@{/products}">繼續購物</a></p>
+<main class="container py-4">
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <div th:if="${cart.empty}">
+        <div class="alert alert-info">您的購物車目前是空的。</div>
+        <a class="btn btn-primary" th:href="@{/products}">前往商品列表</a>
+    </div>
+<div th:if="${!cart.empty}" class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h4 mb-0">購物車明細</h1>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>商品名稱</th>
+                                <th class="text-end">單價</th>
+                                <th class="text-center">數量</th>
+                                <th class="text-end">小計</th>
+                                <th class="text-center">操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="item : ${items}">
+                                <td th:text="${item.name}">商品名稱</td>
+                                <td class="text-end" th:text="${#numbers.formatDecimal(item.unitPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                                <td class="text-center">
+                                    <form class="d-inline-flex align-items-center" th:action="@{'/cart/update/' + ${item.productId}}" method="post">
+                                        <input type="number" class="form-control form-control-sm me-2" name="quantity" min="0" th:value="${item.quantity}">
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm">更新</button>
+                                    </form>
+                                </td>
+                                <td class="text-end" th:text="${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                                <td class="text-center">
+                                    <form th:action="@{'/cart/remove/' + ${item.productId}}" method="post">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">移除</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-end fw-semibold">
+                    總金額：<span class="text-primary" th:text="${#numbers.formatDecimal(cart.totalPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h2 class="h5 mb-0">收貨資訊</h2>
+                </div>
+                <div class="card-body">
+                    <div th:if="${#lists.isEmpty(addresses)}">
+                        <p class="text-muted">尚未建立收貨地址，請先新增。</p>
+                        <a class="btn btn-outline-primary" th:href="@{/addresses/new}">新增地址</a>
+                    </div>
+                    <div th:if="${!#lists.isEmpty(addresses)}">
+                        <form th:action="@{/cart/select-address}" method="post" class="mb-3">
+                            <label for="addressId" class="form-label">選擇收貨地址</label>
+                            <select id="addressId" name="addressId" class="form-select" required>
+                                <option th:each="address : ${addresses}"
+                                        th:value="${address.id}"
+                                        th:selected="${cart.selectedAddressId} == address.id or (cart.selectedAddressId == null and defaultAddressId == address.id)"
+                                        th:text="${address.recipientName + ' - ' + address.addressLine1 + ' ' + address.city}"></option>
+                            </select>
+                            <button type="submit" class="btn btn-primary w-100 mt-3">使用此地址</button>
+                        </form>
+                        <div class="alert alert-info" th:if="${defaultAddressId != null}">
+                            預設地址 ID：<span th:text="${defaultAddressId}"></span>
+                        </div>
+                        <a class="btn btn-outline-secondary w-100" th:href="@{/addresses}">管理地址</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h3 class="h5">下一步</h3>
+                    <p class="text-muted">選擇收貨地址後即可進行結帳流程。</p>
+                    <button class="btn btn-success w-100" type="button" disabled>前往結帳（示意）</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="mt-4">
+        <a class="btn btn-outline-primary" th:href="@{/products}">繼續購物</a>
+    </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

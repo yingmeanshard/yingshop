@@ -18,9 +18,11 @@ import org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver;
 import org.thymeleaf.spring5.view.ThymeleafViewResolver;
 import org.thymeleaf.templatemode.TemplateMode;
 
+
+
 @Configuration
 @EnableWebMvc
-@ComponentScan(basePackages = "com.example.demo") 
+@ComponentScan(basePackages = "com.example.demo")
 public class WebMvcConfig implements WebMvcConfigurer {
 
     @Bean
@@ -56,13 +58,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addResourceLocations("/resources/");
     }
     
-    // ------------------------------
-    // 國際化 (i18n) 設定
-    // ------------------------------
+
     @Bean
     public ResourceBundleMessageSource messageSource() {
         ResourceBundleMessageSource source = new ResourceBundleMessageSource();
-        source.setBasename("messages");  // 對應 messages.properties、messages_zh_TW.properties
+        source.setBasename("messages");
         source.setDefaultEncoding("UTF-8");
         return source;
     }
@@ -78,7 +78,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     
     public LocaleChangeInterceptor localeChangeInterceptor() {
         LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
-        interceptor.setParamName("lang"); // 用 ?lang=zh_TW 切換語系
+        interceptor.setParamName("lang");
         return interceptor;
     }
 

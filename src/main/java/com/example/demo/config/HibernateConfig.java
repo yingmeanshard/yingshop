@@ -1,13 +1,19 @@
 package com.example.demo.config;
 
+import java.sql.Connection;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -17,17 +23,52 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 public class HibernateConfig {
 
+    private static final Logger log = LoggerFactory.getLogger(HibernateConfig.class);
+
     @Autowired
     private Environment env;
 
+    private final AtomicBoolean usingEmbeddedDatabase = new AtomicBoolean(false);
+
     @Bean
     public DataSource dataSource() {
-        DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName(env.getRequiredProperty("jdbc.driverClassName"));
-        dataSource.setUrl(env.getRequiredProperty("jdbc.url"));
-        dataSource.setUsername(env.getRequiredProperty("jdbc.username"));
-        dataSource.setPassword(env.getRequiredProperty("jdbc.password"));
-        return dataSource;
+        String jdbcUrl = env.getProperty("jdbc.url", "");
+        if (jdbcUrl == null || jdbcUrl.isBlank()) {
+            log.warn("未設定 jdbc.url，改用 H2 記憶體資料庫。");
+            usingEmbeddedDatabase.set(true);
+            return createEmbeddedDatabase();
+        }
+
+        DriverManagerDataSource mysqlDataSource = new DriverManagerDataSource();
+        mysqlDataSource.setDriverClassName(env.getProperty("jdbc.driverClassName", "com.mysql.cj.jdbc.Driver"));
+        mysqlDataSource.setUrl(jdbcUrl);
+        mysqlDataSource.setUsername(env.getProperty("jdbc.username", ""));
+        mysqlDataSource.setPassword(env.getProperty("jdbc.password", ""));
+
+        if (canConnect(mysqlDataSource)) {
+            log.info("成功連線到 MySQL：{}", jdbcUrl);
+            return mysqlDataSource;
+        }
+
+        log.warn("無法連線到 MySQL：{}，改用 H2 記憶體資料庫。", jdbcUrl);
+        usingEmbeddedDatabase.set(true);
+        return createEmbeddedDatabase();
+    }
+
+    private boolean canConnect(DataSource dataSource) {
+        try (Connection ignored = dataSource.getConnection()) {
+            return true;
+        } catch (Exception ex) {
+            log.debug("資料庫連線測試失敗", ex);
+            return false;
+        }
+    }
+
+    private DataSource createEmbeddedDatabase() {
+        return new EmbeddedDatabaseBuilder()
+                .setType(EmbeddedDatabaseType.H2)
+                .setName("yingshop")
+                .build();
     }
 
     @Bean
@@ -41,10 +82,14 @@ public class HibernateConfig {
 
     private Properties hibernateProperties() {
         Properties properties = new Properties();
-        properties.put("hibernate.dialect", env.getRequiredProperty("hibernate.dialect"));
-        properties.put("hibernate.show_sql", env.getRequiredProperty("hibernate.show_sql"));
-        properties.put("hibernate.format_sql", env.getRequiredProperty("hibernate.format_sql"));
-        properties.put("hibernate.hbm2ddl.auto", env.getRequiredProperty("hibernate.hbm2ddl.auto"));
+        properties.put("hibernate.show_sql", env.getProperty("hibernate.show_sql", "false"));
+        properties.put("hibernate.format_sql", env.getProperty("hibernate.format_sql", "false"));
+        properties.put("hibernate.hbm2ddl.auto", env.getProperty("hibernate.hbm2ddl.auto", "update"));
+        if (usingEmbeddedDatabase.get()) {
+            properties.put("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
+        } else {
+            properties.put("hibernate.dialect", env.getProperty("hibernate.dialect", "org.hibernate.dialect.MySQL8Dialect"));
+        }
         return properties;
     }
 

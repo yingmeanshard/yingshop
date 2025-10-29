@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 
 
@@ -17,14 +18,20 @@ import org.slf4j.LoggerFactory;
 public class UserServiceImpl implements UserService {
 	private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
+    private final UserDAO userRepository;
+    private final PasswordEncoder passwordEncoder;
+
 	
     @Autowired
-    private UserDAO userRepository;
+    public UserServiceImpl(UserDAO userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
  
 
     @Override
     public List<User> getAllUsers() {
-    	logger.info("info" );
+    	  logger.debug("Fetching all users");
         return userRepository.findAll();
     }
 
@@ -34,22 +41,97 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void saveUser(User user) {
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public void saveUser(User user, String rawPassword) {
+        ensureEmailUnique(user.getEmail(), null);
+        user.setPasswordHash(passwordEncoder.encode(requirePassword(rawPassword)));
         userRepository.save(user);
     }
 
     @Override
-    public void updateUser(Long id, User updatedUser) {
+    public void updateUser(Long id, User updatedUser, String rawPassword) {
         User existingUser = userRepository.findById(id);
         if (existingUser != null) {
+        	 if (!existingUser.getEmail().equalsIgnoreCase(updatedUser.getEmail())) {
+                 ensureEmailUnique(updatedUser.getEmail(), id);
+             }
             existingUser.setName(updatedUser.getName());
             existingUser.setEmail(updatedUser.getEmail());
+            existingUser.setPhoneNumber(updatedUser.getPhoneNumber());
+            existingUser.setDefaultAddressId(updatedUser.getDefaultAddressId());
+            if (rawPassword != null && !rawPassword.isBlank()) {
+                existingUser.setPasswordHash(passwordEncoder.encode(rawPassword));
+            }
             userRepository.save(existingUser);
         }
     }
 
     @Override
+    public User updateProfile(Long id, String name, String email, String phoneNumber) {
+        User existingUser = userRepository.findById(id);
+        if (existingUser == null) {
+            throw new IllegalArgumentException("找不到使用者");
+        }
+        if (!existingUser.getEmail().equalsIgnoreCase(email)) {
+            ensureEmailUnique(email, id);
+        }
+        existingUser.setName(name);
+        existingUser.setEmail(email);
+        existingUser.setPhoneNumber(phoneNumber);
+        userRepository.save(existingUser);
+        return existingUser;
+    }
+
+    
+    @Override
     public void deleteUser(Long id) {
         userRepository.delete(id);
+    }
+    @Override
+    public boolean emailExists(String email, Long excludeUserId) {
+        User existing = userRepository.findByEmail(email);
+        if (existing == null) {
+            return false;
+        }
+        if (excludeUserId == null) {
+            return true;
+        }
+        return !existing.getId().equals(excludeUserId);
+    }
+
+    @Override
+    public void updatePassword(Long id, String rawPassword) {
+        User existingUser = userRepository.findById(id);
+        if (existingUser != null) {
+            existingUser.setPasswordHash(passwordEncoder.encode(requirePassword(rawPassword)));
+            userRepository.save(existingUser);
+        }
+    }
+
+    @Override
+    public void setDefaultAddress(Long userId, Long addressId) {
+        User user = userRepository.findById(userId);
+        if (user != null) {
+            user.setDefaultAddressId(addressId);
+            userRepository.save(user);
+        }
+    }
+
+    private void ensureEmailUnique(String email, Long excludeId) {
+        User existing = userRepository.findByEmail(email);
+        if (existing != null && (excludeId == null || !existing.getId().equals(excludeId))) {
+            throw new IllegalArgumentException("Email 已被使用");
+        }
+    }
+
+    private String requirePassword(String rawPassword) {
+        if (rawPassword == null || rawPassword.isBlank()) {
+            throw new IllegalArgumentException("密碼不可為空");
+        }
+        return rawPassword;
     }
 }

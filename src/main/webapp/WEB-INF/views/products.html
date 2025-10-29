@@ -1,84 +1,102 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>商品列表</title>
-    <link rel="stylesheet" th:href="@{/resources/css/style.css}" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 </head>
-<body>
-<header class="storefront-header">
-    <div class="storefront-title">
-        <h1>商品一覽</h1>
-        <p>精選品項，立即選購。</p>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">YingShop</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" th:href="@{/}">首頁</a></li>
+                <li class="nav-item"><a class="nav-link active" th:href="@{/products}">商品列表</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/cart}">購物車</a></li>
+                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/account/profile}">個人資料</a></li>
+                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/addresses}">收貨地址</a></li>
+            </ul>
+            <div class="d-flex">
+                <a class="btn btn-outline-light me-2" th:href="@{/products/create}">新增商品</a>
+                <a class="btn btn-outline-light me-2" th:href="@{/login}" sec:authorize="isAnonymous()">登入</a>
+                <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
+                    <button class="btn btn-outline-light" type="submit">登出</button>
+                </form>
+            </div>
+        </div>
+
     </div>
-    <div class="storefront-actions">
-        <a class="primary-button" th:href="@{/products/create}">新增商品</a>
-        <a class="ghost-button" th:href="@{/cart}">查看購物車</a>
-    </div>
-</header>
+</nav>
 
-<div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-<div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+<main class="container py-4">
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-<form method="get" th:action="@{/products}" class="filter-form">
-    <label for="category">分類：</label>
-    <select id="category" name="category">
-        <option value="" th:selected="${selectedCategory == null || #strings.isEmpty(selectedCategory)}">全部</option>
-        <option th:each="category : ${categories}"
-                th:value="${category}"
-                th:selected="${category == selectedCategory}"
-                th:text="${category}"></option>
-    </select>
-    <button type="submit" class="solid-button">套用</button>
-    <a th:href="@{/products}" class="reset-link">清除</a>
-</form>
-
-<div th:if="${#lists.isEmpty(products)}" class="empty-state">
-    目前沒有符合條件的商品。
-</div>
-
-<div class="product-grid" th:if="${!#lists.isEmpty(products)}">
-    <div class="product-card" th:each="product : ${products}">
-        <a class="product-image-link" th:href="@{'/products/detail/' + ${product.id}}" aria-label="查看商品詳情">
-            <div class="product-image">
-                <img th:if="${!#strings.isEmpty(product.imageUrl)}" th:src="${product.imageUrl}" th:alt="${product.name}" />
-                <div th:if="${#strings.isEmpty(product.imageUrl)}" class="image-placeholder">
-                    <span>暫無圖片</span>
+ <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h1 class="card-title h3 mb-3">商品一覽</h1>
+            <form class="row g-3 align-items-center" th:action="@{/products}" method="get">
+                <div class="col-auto">
+                    <label for="category" class="col-form-label">分類：</label>
                 </div>
-            </div>
-        </a>
-        <div class="product-body">
-            <div class="product-info">
-                <h2>
-                    <a th:href="@{'/products/detail/' + ${product.id}}" th:text="${product.name}"></a>
-                </h2>
-                <p class="product-category" th:text="${product.category}"></p>
-                <p class="product-price" th:text="${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}"></p>
-                <p class="product-description-snippet"
-                   th:text="${#strings.isEmpty(product.description) ? '此商品尚無描述。' : #strings.abbreviate(product.description, 80)}"></p>
-            </div>
-            <div class="product-footer">
-                <div class="product-purchase">
-                    <a class="ghost-button" th:href="@{'/products/detail/' + ${product.id}}">查看詳情</a>
-                    <form class="cart-action" method="post" th:action="@{'/cart/add/' + ${product.id}}">
-                        <div class="product-quantity">
-                            <button type="button" class="quantity-button" onclick="var input = this.nextElementSibling; if (parseInt(input.value, 10) > 1) { input.stepDown(); }">-</button>
-                            <input type="number" name="quantity" min="1" value="1" class="quantity-input" />
-                            <button type="button" class="quantity-button" onclick="this.previousElementSibling.stepUp();">+</button>
+                <div class="col-sm-4">
+                    <select class="form-select" id="category" name="category">
+                        <option value="" th:selected="${selectedCategory == null || #strings.isEmpty(selectedCategory)}">全部</option>
+                        <option th:each="category : ${categories}"
+                                th:value="${category}"
+                                th:selected="${category == selectedCategory}"
+                                th:text="${category}"></option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">套用</button>
+                    <a class="btn btn-outline-secondary ms-2" th:href="@{/products}">清除</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(products)}" class="alert alert-info">目前沒有符合條件的商品。</div>
+
+ <div class="row g-4" th:if="${!#lists.isEmpty(products)}">
+        <div class="col-md-6 col-lg-4" th:each="product : ${products}">
+            <div class="card h-100 shadow-sm">
+                <div class="ratio ratio-4x3 bg-light">
+                    <img th:if="${!#strings.isEmpty(product.imageUrl)}" th:src="${product.imageUrl}"
+                         th:alt="${product.name}" class="object-fit-cover rounded-top">
+                    <div th:if="${#strings.isEmpty(product.imageUrl)}" class="d-flex align-items-center justify-content-center text-muted">
+                        暫無圖片
+                    </div>
+                </div>
+           <div class="card-body d-flex flex-column">
+                    <h5 class="card-title" th:text="${product.name}"></h5>
+                    <p class="text-muted mb-1" th:text="${product.category}"></p>
+                    <p class="fw-semibold text-primary" th:text="${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}"></p>
+                    <p class="flex-grow-1" th:text="${#strings.isEmpty(product.description) ? '此商品尚無描述。' : #strings.abbreviate(product.description, 80)}"></p>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="btn-group" role="group">
+                            <a class="btn btn-outline-primary" th:href="@{'/products/detail/' + ${product.id}}">查看詳情</a>
+                            <a class="btn btn-outline-secondary" th:href="@{'/products/edit/' + ${product.id}}">編輯</a>
+                            <a class="btn btn-outline-danger" th:href="@{'/products/delete/' + ${product.id}}"
+                               onclick="return confirm('確定刪除這個商品嗎？');">刪除</a>
                         </div>
-                        <input type="hidden" name="redirect"
-                               th:value="${#httpServletRequest.requestURI + (#strings.isEmpty(#httpServletRequest.queryString) ? '' : '?' + #httpServletRequest.queryString)}" />
-                        <button type="submit" class="add-to-cart-button">加入購物車</button>
-                    </form>
-                </div>
-                <div class="product-manage">
-                    <a class="link-button" th:href="@{'/products/edit/' + ${product.id}}">編輯</a>
-                    <a class="link-button danger" th:href="@{'/products/delete/' + ${product.id}}"
-                       onclick="return confirm('確定刪除這個商品嗎？');">刪除</a>
+             <form class="d-flex align-items-center gap-2" method="post" th:action="@{'/cart/add/' + ${product.id}}">
+                            <input type="number" class="form-control" name="quantity" min="1" value="1">
+                            <input type="hidden" name="redirect"
+                                   th:value="${#httpServletRequest.requestURI + (#strings.isEmpty(#httpServletRequest.queryString) ? '' : '?' + #httpServletRequest.queryString)}" />
+                            <button type="submit" class="btn btn-success flex-grow-1">加入購物車</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+  </main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
+</html>              

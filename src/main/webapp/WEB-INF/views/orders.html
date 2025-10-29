@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>訂單列表</title>
+    <link rel="stylesheet" th:href="@{/resources/css/style.css}" />
+</head>
+<body>
+<header class="storefront-header">
+    <div class="storefront-title">
+        <h1>訂單管理</h1>
+        <p>檢視使用者訂單與狀態。</p>
+    </div>
+    <div class="storefront-actions">
+        <a class="ghost-button" th:href="@{/products}">返回商品</a>
+        <a class="primary-button" th:href="@{/cart}">回購物車</a>
+    </div>
+</header>
+
+<div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+<div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+<section class="filter-form">
+    <form method="get" th:action="@{/orders}">
+        <label for="user">使用者：</label>
+        <select id="user" name="userId">
+            <option value="" th:selected="${selectedUserId == null}">全部訂單</option>
+            <option th:each="user : ${users}"
+                    th:value="${user.id}"
+                    th:selected="${selectedUserId == user.id}"
+                    th:text="${user.name}"></option>
+        </select>
+        <button type="submit" class="solid-button">篩選</button>
+        <a th:href="@{/orders}" class="reset-link">重設</a>
+    </form>
+</section>
+
+<section th:if="${#lists.isEmpty(orders)}" class="empty-state">
+    目前尚無訂單紀錄。
+</section>
+
+<section th:if="${!#lists.isEmpty(orders)}" class="table-container">
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>編號</th>
+            <th>使用者</th>
+            <th>總價</th>
+            <th>狀態</th>
+            <th>建立時間</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="order : ${orders}">
+            <td th:text="${order.id}"></td>
+            <td th:text="${order.user != null ? order.user.name : 'N/A'}"></td>
+            <td th:text="${#numbers.formatDecimal(order.totalPrice, 1, 'COMMA', 2, 'POINT')}"></td>
+            <td th:text="${order.status != null ? order.status.displayName : '未設定'}"></td>
+            <td th:text="${order.createdAt}"></td>
+            <td>
+                <a class="link-button" th:href="@{'/orders/' + ${order.id}}">查看詳情</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>

@@ -16,4 +16,6 @@ public interface CartService {
     BigDecimal calculateTotalPrice(Cart cart);
 
     int getTotalQuantity(Cart cart);
+    
+    void selectAddress(Cart cart, Long addressId);
 }

@@ -9,6 +9,7 @@ public class Cart {
 
     private final Map<Long, CartItem> items = new LinkedHashMap<>();
     private BigDecimal totalPrice = BigDecimal.ZERO;
+    private Long selectedAddressId;
 
     public Map<Long, CartItem> getItems() {
         return items;
@@ -35,11 +36,19 @@ public class Cart {
     public void clear() {
         items.clear();
         totalPrice = BigDecimal.ZERO;
+        selectedAddressId = null;
     }
 
     public void recalculateTotalPrice() {
         totalPrice = items.values().stream()
                 .map(CartItem::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+    public Long getSelectedAddressId() {
+        return selectedAddressId;
+    }
+
+    public void setSelectedAddressId(Long selectedAddressId) {
+        this.selectedAddressId = selectedAddressId;
     }
 }

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>訂單詳情</title>
+    <link rel="stylesheet" th:href="@{/resources/css/style.css}" />
+</head>
+<body>
+<header class="storefront-header">
+    <div class="storefront-title">
+        <h1>訂單 #<span th:text="${order.id}"></span></h1>
+        <p>檢視訂單資訊與項目內容。</p>
+    </div>
+    <div class="storefront-actions">
+        <a class="ghost-button" th:href="@{/orders}">返回列表</a>
+        <a class="primary-button" th:href="@{/products}">繼續購物</a>
+    </div>
+</header>
+
+<div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+<div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+<section class="detail-card">
+    <h2>基本資訊</h2>
+    <div class="detail-grid">
+        <div>
+            <span class="detail-label">使用者</span>
+            <span th:text="${order.user != null ? order.user.name : 'N/A'}"></span>
+        </div>
+        <div>
+            <span class="detail-label">總價</span>
+            <span th:text="${#numbers.formatDecimal(order.totalPrice, 1, 'COMMA', 2, 'POINT')}"></span>
+        </div>
+        <div>
+            <span class="detail-label">狀態</span>
+            <span th:text="${order.status != null ? order.status.displayName : '未設定'}"></span>
+        </div>
+        <div>
+            <span class="detail-label">建立時間</span>
+            <span th:text="${order.createdAt}"></span>
+        </div>
+    </div>
+</section>
+
+<section class="detail-card">
+    <h2>更新狀態</h2>
+    <form method="post" th:action="@{'/orders/' + ${order.id} + '/status'}" class="filter-form">
+        <label for="status">狀態</label>
+        <select id="status" name="status">
+            <option th:each="status : ${orderStatuses}"
+                    th:value="${status.name()}"
+                    th:selected="${status == order.status}"
+                    th:text="${status.displayName}"></option>
+        </select>
+        <button type="submit" class="solid-button">更新</button>
+        <p class="form-hint">狀態依序為：待付款 → 已付款 → 已發貨。</p>
+    </form>
+</section>
+
+<section class="detail-card">
+    <h2>訂單項目</h2>
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>商品名稱</th>
+            <th>數量</th>
+            <th>單價</th>
+            <th>小計</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${order.items}">
+            <td th:text="${item.product != null ? item.product.name : '未知商品'}"></td>
+            <td th:text="${item.quantity}"></td>
+            <td th:text="${#numbers.formatDecimal(item.unitPrice, 1, 'COMMA', 2, 'POINT')}"></td>
+            <td th:text="${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}"></td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>

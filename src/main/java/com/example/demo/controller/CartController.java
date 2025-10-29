@@ -1,11 +1,18 @@
 package com.example.demo.controller;
 
+import com.example.demo.model.Address;
 import com.example.demo.model.Cart;
 import com.example.demo.model.Product;
+import com.example.demo.model.User;
+import com.example.demo.service.AddressService;
 import com.example.demo.service.CartService;
 import com.example.demo.service.ProductService;
+import com.example.demo.service.UserService;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,11 +31,18 @@ public class CartController {
 
     private final ProductService productService;
     private final CartService cartService;
+    private final AddressService addressService;
+    private final UserService userService;
 
     @Autowired
-    public CartController(ProductService productService, CartService cartService) {
+    public CartController(ProductService productService,
+            CartService cartService,
+            AddressService addressService,
+            UserService userService) {
         this.productService = productService;
         this.cartService = cartService;
+        this.addressService = addressService;
+        this.userService = userService;
     }
 
     @ModelAttribute("cart")
@@ -82,9 +96,32 @@ public class CartController {
         cartService.calculateTotalPrice(cart);
         model.addAttribute("cart", cart);
         model.addAttribute("items", cart.getItemList());
+        User user = currentUser();
+        if (user != null) {
+            model.addAttribute("addresses", addressService.findByUser(user.getId()));
+            model.addAttribute("defaultAddressId", user.getDefaultAddressId());
+        }
         return "cart";
     }
 
+    @PostMapping("/select-address")
+    public String selectAddress(@RequestParam("addressId") Long addressId,
+                                @ModelAttribute("cart") Cart cart,
+                                RedirectAttributes redirectAttributes) {
+        User user = currentUser();
+        if (user == null) {
+            return "redirect:/login";
+        }
+        Address address = addressService.getById(addressId);
+        if (address == null || address.getUser() == null || !address.getUser().getId().equals(user.getId())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "無法選擇該地址");
+            return "redirect:/cart";
+        }
+        cartService.selectAddress(cart, addressId);
+        redirectAttributes.addFlashAttribute("successMessage", "已選擇收貨地址");
+        return "redirect:/cart";
+    }
+    
     private String resolveRedirectTarget(String redirect, HttpServletRequest request) {
         String defaultTarget = "/cart";
         if (redirect == null || redirect.isBlank()) {
@@ -110,5 +147,14 @@ public class CartController {
         }
 
         return trimmed;
+    }
+
+    private User currentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() ||
+                authentication instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+        return userService.getUserByEmail(authentication.getName());
     }
 }

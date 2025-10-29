@@ -82,4 +82,12 @@ public class CartServiceImpl implements CartService {
         }
         return cart.getTotalQuantity();
     }
+    
+    @Override
+    public void selectAddress(Cart cart, Long addressId) {
+        if (cart == null) {
+            throw new IllegalArgumentException("Cart must not be null");
+        }
+        cart.setSelectedAddressId(addressId);
+    }
 }

@@ -1,30 +1,111 @@
 package com.example.demo.test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
-import com.example.demo.config.WebMvcConfig;
-import com.example.demo.model.User;
-import com.example.demo.service.UserService;
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = { WebMvcConfig.class }) // 包含 Web MVC 配置
-@WebAppConfiguration // 必須加，告訴 Spring 測試用 WebApplicationContext
-public class UserServiceTest {
-   @Autowired
-   private UserService userService;
-   @Test
-   public void testGetUserById() {
-       // 確認 userService 被正確注入
-       assertTrue("UserService 未注入", userService != null);
-       // 執行測試
-       User user = userService.getUserById(1L);
-       assertNotNull("使用者不存在", user);
-       assertEquals("使用者 ID 不正確", 1, user.getId().longValue());
-   }
-}
 
+import com.example.demo.dao.UserDAO;
+import com.example.demo.model.User;
+import com.example.demo.service.impl.UserServiceImpl;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.ArgumentCaptor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+
+@RunWith(MockitoJUnitRunner.class)
+public class UserServiceTest {
+	
+
+    @Mock
+    private UserDAO userDAO;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @InjectMocks
+    private UserServiceImpl userService;
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
+
+    @Test
+    public void saveUserShouldEncodePasswordAndPersist() {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setName("Tester");
+
+        when(passwordEncoder.encode("secret")).thenReturn("encoded-secret");
+        when(userDAO.findByEmail("test@example.com")).thenReturn(null);
+
+        userService.saveUser(user, "secret");
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userDAO).save(captor.capture());
+        assertEquals("encoded-secret", captor.getValue().getPasswordHash());
+    }
+
+    @Test
+    public void saveUserShouldRejectDuplicateEmail() {
+        User user = new User();
+        user.setEmail("duplicate@example.com");
+        user.setName("Tester");
+
+        when(userDAO.findByEmail("duplicate@example.com")).thenReturn(new User());
+
+        expectedException.expect(IllegalArgumentException.class);
+        userService.saveUser(user, "secret");
+    }
+
+    @Test
+    public void setDefaultAddressShouldUpdateUser() {
+        User user = new User();
+        user.setId(1L);
+
+        when(userDAO.findById(1L)).thenReturn(user);
+
+        userService.setDefaultAddress(1L, 99L);
+
+        assertEquals(Long.valueOf(99L), user.getDefaultAddressId());
+        verify(userDAO).save(user);
+    }
+
+    @Test
+    public void updateProfileShouldReturnUpdatedEntity() {
+        User existing = new User();
+        existing.setId(5L);
+        existing.setEmail("old@example.com");
+
+        when(userDAO.findById(5L)).thenReturn(existing);
+        when(userDAO.findByEmail("new@example.com")).thenReturn(null);
+
+        User result = userService.updateProfile(5L, "New Name", "new@example.com", "0987-123456");
+
+        assertSame(existing, result);
+        assertEquals("New Name", existing.getName());
+        assertEquals("new@example.com", existing.getEmail());
+        assertEquals("0987-123456", existing.getPhoneNumber());
+        verify(userDAO).save(existing);
+    }
+
+    @Test
+    public void updateProfileShouldRejectDuplicateEmail() {
+        User existing = new User();
+        existing.setId(8L);
+        existing.setEmail("old@example.com");
+
+        User other = new User();
+        other.setId(99L);
+
+        when(userDAO.findById(8L)).thenReturn(existing);
+        when(userDAO.findByEmail("duplicate@example.com")).thenReturn(other);
+
+        expectedException.expect(IllegalArgumentException.class);
+        userService.updateProfile(8L, "Name", "duplicate@example.com", null);
+    }
+
+}
