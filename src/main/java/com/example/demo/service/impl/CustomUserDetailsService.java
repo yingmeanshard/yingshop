@@ -1,6 +1,7 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.model.User;
+import com.example.demo.model.UserRole;
 import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -32,11 +33,16 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPasswordHash(),
-                authorities()
+                authoritiesFor(user)
         );
     }
 
-    private Collection<? extends GrantedAuthority> authorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+    private Collection<? extends GrantedAuthority> authoritiesFor(User user) {
+        if (user.getRole() == UserRole.ADMIN) {
+            return java.util.List.of(
+                    new SimpleGrantedAuthority("ROLE_ADMIN"),
+                    new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+        }
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
     }
 }

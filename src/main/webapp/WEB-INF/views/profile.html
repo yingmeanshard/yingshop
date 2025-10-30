@@ -18,7 +18,6 @@
                 <li class="nav-item"><a class="nav-link" th:href="@{/products}">商品列表</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/cart}">購物車</a></li>
                 <li class="nav-item"><a class="nav-link active" th:href="@{/account/profile}">個人資料</a></li>
-                <li class="nav-item"><a class="nav-link" th:href="@{/addresses}">收貨地址</a></li>
             </ul>
             <div class="d-flex">
                 <form th:action="@{/logout}" method="post">
@@ -59,7 +58,95 @@
                     </form>
                 </div>
                 <div class="card-footer text-muted">
-                    預設收貨地址 ID：<span th:text="${user.defaultAddressId != null ? user.defaultAddressId : '未設定'}"></span>
+                    預設收貨地址 ID：<span th:text="${defaultAddressId != null ? defaultAddressId : '未設定'}"></span>
+                </div>
+            </div>
+            <div class="card shadow-sm mt-4" id="addressesSection">
+                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">收件資料</h2>
+                    <span class="badge bg-light text-secondary" th:text="${#lists.isEmpty(addresses) ? '尚未設定' : defaultAddressId != null ? '預設 ID：' + defaultAddressId : '未設定預設'}"></span>
+                </div>
+                <div class="card-body">
+                    <div th:if="${errorMessageAddress}" class="alert alert-danger" th:text="${errorMessageAddress}"></div>
+                    <div th:if="${successMessageAddress}" class="alert alert-success" th:text="${successMessageAddress}"></div>
+                    <div th:if="${#lists.isEmpty(addresses)}" class="alert alert-info">
+                        尚未新增收貨地址。
+                    </div>
+                    <div th:if="${!#lists.isEmpty(addresses)}" class="list-group mb-4">
+                        <div class="list-group-item" th:each="address : ${addresses}">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                                <div>
+                                    <h3 class="h6 mb-1">
+                                        <span th:text="${address.recipientName}">收件人</span>
+                                        <span class="badge bg-success ms-2" th:if="${defaultAddressId != null and defaultAddressId == address.id}">預設</span>
+                                    </h3>
+                                    <p class="mb-1"><strong>電話：</strong><span th:text="${address.phoneNumber}"></span></p>
+                                    <p class="mb-1"><strong>地址：</strong>
+                                        <span th:text="${address.addressLine1}"></span>
+                                        <span th:if="${address.addressLine2 != null}" th:text="${' ' + address.addressLine2}"></span>
+                                    </p>
+                                    <p class="mb-1">
+                                        <strong>城市 / 縣市：</strong>
+                                        <span th:text="${address.city}"></span>
+                                        <span th:text="${' ' + address.state}"></span>
+                                    </p>
+                                    <p class="mb-0"><strong>郵遞區號：</strong><span th:text="${address.postalCode}"></span></p>
+                                </div>
+                                <div class="d-flex flex-column gap-2">
+                                    <form th:action="@{'/account/addresses/' + ${address.id} + '/default'}" method="post">
+                                        <button type="submit" class="btn btn-outline-primary btn-sm"
+                                                th:disabled="${defaultAddressId != null and defaultAddressId == address.id}">
+                                            設為預設
+                                        </button>
+                                    </form>
+                                    <form th:action="@{'/account/addresses/' + ${address.id} + '/delete'}" method="post"
+                                          onsubmit="return confirm('確定要刪除此地址嗎？');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">刪除</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="h6">新增收貨地址</h3>
+                    <form th:action="@{/account/addresses}" th:object="${newAddress}" method="post" class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="recipientName">收件人</label>
+                            <input type="text" class="form-control" id="recipientName" th:field="*{recipientName}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="phoneNumber">電話</label>
+                            <input type="text" class="form-control" id="phoneNumber" th:field="*{phoneNumber}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="addressLine1">地址 1</label>
+                            <input type="text" class="form-control" id="addressLine1" th:field="*{addressLine1}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="addressLine2">地址 2</label>
+                            <input type="text" class="form-control" id="addressLine2" th:field="*{addressLine2}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="city">城市</label>
+                            <input type="text" class="form-control" id="city" th:field="*{city}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="state">州 / 縣市</label>
+                            <input type="text" class="form-control" id="state" th:field="*{state}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="postalCode">郵遞區號</label>
+                            <input type="text" class="form-control" id="postalCode" th:field="*{postalCode}" required>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="setDefault" name="setDefault">
+                                <label class="form-check-label" for="setDefault">新增後設為預設地址</label>
+                            </div>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-success">新增地址</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

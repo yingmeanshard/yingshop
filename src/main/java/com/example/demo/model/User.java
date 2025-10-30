@@ -30,12 +30,17 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Address> addresses = new ArrayList<>();
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private UserRole role = UserRole.CUSTOMER;
+
     public User() {
     }
     
     public User(String name, String email) {
         this.name = name;
         this.email = email;
+        this.role = UserRole.CUSTOMER;
     }
     
     public Long getId() {
@@ -94,6 +99,17 @@ public class User {
         this.addresses = addresses;
     }
 
+    public UserRole getRole() {
+        if (role == null) {
+            role = UserRole.CUSTOMER;
+        }
+        return role;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role == null ? UserRole.CUSTOMER : role;
+    }
+
     public void addAddress(Address address) {
         addresses.add(address);
         address.setUser(this);
@@ -110,6 +126,7 @@ public class User {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +
+                ", role=" + role +
                 '}';
     }
 }

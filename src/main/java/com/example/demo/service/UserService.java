@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.model.User;
+import com.example.demo.model.UserRole;
 import java.util.List;
 
 public interface UserService {
@@ -24,4 +25,6 @@ public interface UserService {
     void updatePassword(Long id, String rawPassword);
 
     void setDefaultAddress(Long userId, Long addressId);
+
+    User registerUser(String name, String email, String rawPassword, UserRole role);
 }

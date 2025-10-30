@@ -2,20 +2,21 @@ package com.example.demo.controller;
 
 import com.example.demo.model.PasswordResetToken;
 import com.example.demo.model.User;
+import com.example.demo.model.UserRole;
 import com.example.demo.service.PasswordResetService;
 import com.example.demo.service.UserService;
+import com.example.demo.web.RegistrationForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Controller
-@RequestMapping
 public class AuthController {
 
     private final UserService userService;
@@ -27,9 +28,45 @@ public class AuthController {
         this.passwordResetService = passwordResetService;
     }
 
-    @GetMapping("/login")
-    public String loginPage() {
-        return "login";
+    @GetMapping("/register")
+    public String showRegister(Model model) {
+        if (!model.containsAttribute("registrationForm")) {
+            model.addAttribute("registrationForm", new RegistrationForm());
+        }
+        return "register";
+    }
+
+    @PostMapping("/register")
+    public String register(@ModelAttribute("registrationForm") RegistrationForm form,
+                           RedirectAttributes redirectAttributes) {
+        try {
+            validateRegistration(form);
+            userService.registerUser(form.getName(), form.getEmail(), form.getPassword(), UserRole.CUSTOMER);
+            redirectAttributes.addFlashAttribute("registrationSuccess", "註冊成功，現在可以登入。");
+            return "redirect:/";
+        } catch (IllegalArgumentException ex) {
+            RegistrationForm safeCopy = new RegistrationForm();
+            safeCopy.setName(form.getName());
+            safeCopy.setEmail(form.getEmail());
+            redirectAttributes.addFlashAttribute("registrationForm", safeCopy);
+            redirectAttributes.addFlashAttribute("registrationError", ex.getMessage());
+            return "redirect:/register";
+        }
+    }
+
+    private void validateRegistration(RegistrationForm form) {
+        if (form.getName() == null || form.getName().isBlank()) {
+            throw new IllegalArgumentException("請輸入姓名。");
+        }
+        if (form.getEmail() == null || form.getEmail().isBlank()) {
+            throw new IllegalArgumentException("請輸入 Email。");
+        }
+        if (form.getPassword() == null || form.getPassword().isBlank()) {
+            throw new IllegalArgumentException("請輸入密碼。");
+        }
+        if (!form.getPassword().equals(form.getConfirmPassword())) {
+            throw new IllegalArgumentException("兩次輸入的密碼不一致。");
+        }
     }
 
     @GetMapping("/users/request-reset")
@@ -76,8 +113,8 @@ public class AuthController {
         }
         try {
             passwordResetService.resetPassword(resetToken, password);
-            redirectAttributes.addFlashAttribute("successMessage", "密碼已更新，請重新登入");
-            return "redirect:/login";
+            redirectAttributes.addFlashAttribute("registrationSuccess", "密碼已更新，請重新登入。");
+            return "redirect:/";
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             redirectAttributes.addAttribute("token", token);

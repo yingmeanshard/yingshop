@@ -2,6 +2,7 @@ package com.example.demo.service.impl;
 
 import com.example.demo.dao.UserDAO;
 import com.example.demo.model.User;
+import com.example.demo.model.UserRole;
 import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void saveUser(User user, String rawPassword) {
         ensureEmailUnique(user.getEmail(), null);
+        user.setRole(user.getRole());
         user.setPasswordHash(passwordEncoder.encode(requirePassword(rawPassword)));
         userRepository.save(user);
     }
@@ -63,6 +65,9 @@ public class UserServiceImpl implements UserService {
             existingUser.setEmail(updatedUser.getEmail());
             existingUser.setPhoneNumber(updatedUser.getPhoneNumber());
             existingUser.setDefaultAddressId(updatedUser.getDefaultAddressId());
+            if (updatedUser.getRole() != null) {
+                existingUser.setRole(updatedUser.getRole());
+            }
             if (rawPassword != null && !rawPassword.isBlank()) {
                 existingUser.setPasswordHash(passwordEncoder.encode(rawPassword));
             }
@@ -121,10 +126,22 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Override
+    public User registerUser(String name, String email, String rawPassword, UserRole role) {
+        User user = new User();
+        user.setName(name);
+        user.setEmail(email);
+        if (role != null) {
+            user.setRole(role);
+        }
+        saveUser(user, rawPassword);
+        return user;
+    }
+
     private void ensureEmailUnique(String email, Long excludeId) {
         User existing = userRepository.findByEmail(email);
         if (existing != null && (excludeId == null || !existing.getId().equals(excludeId))) {
-            throw new IllegalArgumentException("Email 已被使用");
+            throw new IllegalArgumentException("Email重複註冊");
         }
     }
 

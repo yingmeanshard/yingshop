@@ -11,6 +11,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import com.example.demo.security.RoleAwareAuthenticationSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -31,16 +33,19 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .antMatchers("/resources/**", "/login", "/users/request-reset", "/users/reset").permitAll()
+                        .antMatchers("/resources/**", "/login", "/register", "/users/request-reset", "/users/reset").permitAll()
+                        .antMatchers("/products/create", "/products/edit/**", "/products/delete/**", "/users/**").hasRole("ADMIN")
                         .antMatchers("/cart/**", "/account/**", "/addresses/**").authenticated()
                         .anyRequest().permitAll())
                 .formLogin(form -> form
-                        .loginPage("/login")
-                        .defaultSuccessUrl("/account/profile", true)
+                        .loginPage("/")
+                        .loginProcessingUrl("/login")
+                        .successHandler(roleAwareAuthenticationSuccessHandler())
+                        .failureUrl("/?error")
                         .permitAll())
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")
+                        .logoutSuccessUrl("/?logout")
                         .permitAll());
         http.authenticationProvider(authenticationProvider());
         return http.build();
@@ -52,6 +57,11 @@ public class SecurityConfig {
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
         return provider;
+    }
+
+    @Bean
+    public AuthenticationSuccessHandler roleAwareAuthenticationSuccessHandler() {
+        return new RoleAwareAuthenticationSuccessHandler();
     }
 
     @Bean

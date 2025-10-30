@@ -9,6 +9,9 @@ import com.example.demo.service.CartService;
 import com.example.demo.service.ProductService;
 import com.example.demo.service.UserService;
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
+import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -56,7 +59,7 @@ public class CartController {
     }
 
     @PostMapping("/add/{productId}")
-    public String addItem(@PathVariable Long productId,
+    public Object addItem(@PathVariable Long productId,
                           @RequestParam(value = "quantity", required = false, defaultValue = "1") int quantity,
                           @RequestParam(value = "redirect", required = false) String redirect,
                           @ModelAttribute("cart") Cart cart,
@@ -68,6 +71,12 @@ public class CartController {
             return "redirect:/products";
         }
         cartService.addItem(cart, product, quantity);
+        if ("XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))) {
+            Map<String, Object> body = new HashMap<>();
+            body.put("message", "商品已加入購物車。");
+            body.put("totalQuantity", cartService.getTotalQuantity(cart));
+            return ResponseEntity.ok(body);
+        }
         redirectAttributes.addFlashAttribute("successMessage", "商品已加入購物車。");
         return "redirect:" + resolveRedirectTarget(redirect, request);
     }

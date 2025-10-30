@@ -2,6 +2,7 @@ package com.example.demo.test;
 
 import com.example.demo.dao.UserDAO;
 import com.example.demo.model.User;
+import com.example.demo.model.UserRole;
 import com.example.demo.service.impl.UserServiceImpl;
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,6 +48,7 @@ public class UserServiceTest {
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userDAO).save(captor.capture());
         assertEquals("encoded-secret", captor.getValue().getPasswordHash());
+        assertEquals(UserRole.CUSTOMER, captor.getValue().getRole());
     }
 
     @Test
@@ -106,6 +108,21 @@ public class UserServiceTest {
 
         expectedException.expect(IllegalArgumentException.class);
         userService.updateProfile(8L, "Name", "duplicate@example.com", null);
+    }
+
+    @Test
+    public void registerUserShouldPersistWithSelectedRole() {
+        when(userDAO.findByEmail("admin@example.com")).thenReturn(null);
+        when(passwordEncoder.encode("admin-pass")).thenReturn("encoded-admin");
+
+        userService.registerUser("Admin", "admin@example.com", "admin-pass", UserRole.ADMIN);
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userDAO).save(captor.capture());
+        User saved = captor.getValue();
+        assertEquals("Admin", saved.getName());
+        assertEquals(UserRole.ADMIN, saved.getRole());
+        assertEquals("encoded-admin", saved.getPasswordHash());
     }
 
 }
