@@ -18,11 +18,13 @@
                 <li class="nav-item"><a class="nav-link" th:href="@{/products}">商品列表</a></li>
                 <li class="nav-item"><a class="nav-link active" th:href="@{/cart}">購物車</a></li>
                 <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/account/profile}">個人資料</a></li>
-                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{'/account/profile#addressesSection'}">收貨資料</a></li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')"><a class="nav-link" th:href="@{/orders}">訂單管理</a></li>
             </ul>
             <div class="d-flex align-items-center gap-2">
+                <span class="text-white-50" sec:authorize="hasRole('ADMIN')">管理者模式</span>
                 <a class="btn btn-outline-light" th:href="@{'/#authSection'}" sec:authorize="isAnonymous()">登入</a>
                 <a class="btn btn-outline-light" th:href="@{/register}" sec:authorize="isAnonymous()">註冊</a>
+                <button class="btn btn-outline-light disabled" type="button" disabled sec:authorize="isAnonymous()">登出</button>
                 <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
                     <button class="btn btn-outline-light" type="submit">登出</button>
                 </form>
@@ -111,11 +113,27 @@
                     </div>
                 </div>
             </div>
-            <div class="card shadow-sm mt-3">
+            <div class="card shadow-sm mt-3" th:if="${!cart.empty}" sec:authorize="isAuthenticated()">
                 <div class="card-body">
-                    <h3 class="h5">下一步</h3>
-                    <p class="text-muted">選擇收貨地址後即可進行結帳流程。</p>
-                    <button class="btn btn-success w-100" type="button" disabled>前往結帳（示意）</button>
+                    <h3 class="h5">建立訂單</h3>
+                    <p class="text-muted">選擇付款方式後送出即可建立訂單。</p>
+                    <form th:action="@{/orders}" method="post" class="row g-3">
+                        <input type="hidden" name="userId" th:value="${currentUser != null ? currentUser.id : ''}" />
+                        <div class="col-12">
+                            <label class="form-label">付款方式</label>
+                            <div th:each="method : ${paymentMethods}" class="form-check">
+                                <input class="form-check-input" type="radio" name="paymentMethod"
+                                       th:id="${'pm-' + method.name()}"
+                                       th:value="${method.name()}"
+                                       th:checked="${method.name() == 'CASH_ON_DELIVERY'}">
+                                <label class="form-check-label" th:for="${'pm-' + method.name()}"
+                                       th:text="${method.displayName}"></label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-success w-100">確認建立訂單</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

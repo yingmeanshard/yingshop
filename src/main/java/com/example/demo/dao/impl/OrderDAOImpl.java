@@ -54,9 +54,12 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public List<Order> findByUser(User user) {
+        if (user == null || user.getId() == null) {
+            return List.of();
+        }
         Query<Order> query = getCurrentSession()
-                .createQuery("from Order where user = :user order by createdAt desc", Order.class);
-        query.setParameter("user", user);
+                .createQuery("from Order where user.id = :userId order by createdAt desc", Order.class);
+        query.setParameter("userId", user.getId());
         return query.list();
     }
 }

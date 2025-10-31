@@ -18,12 +18,13 @@
                 <li class="nav-item"><a class="nav-link" th:href="@{/products}">商品列表</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/cart}">購物車</a></li>
                 <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/account/profile}">個人資料</a></li>
-                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{'/account/profile#addressesSection'}">收貨資料</a></li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')"><a class="nav-link" th:href="@{/orders}">訂單管理</a></li>
             </ul>
             <div class="d-flex align-items-center gap-2">
                 <span class="text-white-50" sec:authorize="hasRole('ADMIN')">管理者模式</span>
                 <a class="btn btn-outline-light" href="#authSection" sec:authorize="isAnonymous()">登入</a>
                 <a class="btn btn-outline-light" th:href="@{/register}" sec:authorize="isAnonymous()">註冊</a>
+                <button class="btn btn-outline-light disabled" type="button" disabled sec:authorize="isAnonymous()">登出</button>
                 <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
                     <button class="btn btn-outline-light" type="submit">登出</button>
                 </form>
@@ -49,8 +50,49 @@
                         <a class="btn btn-outline-primary" th:href="@{/cart}">開啟購物車</a>
                         <a class="btn btn-outline-secondary" th:href="@{/account/profile}">管理個人資料</a>
                         <a class="btn btn-outline-secondary" th:href="@{'/account/profile#addressesSection'}">管理收貨資料</a>
+                        <a class="btn btn-outline-dark" th:href="@{/orders/mine}" sec:authorize="isAuthenticated()">我的訂單</a>
                         <a class="btn btn-outline-warning" th:href="@{/products/create}" sec:authorize="hasRole('ADMIN')">建立新商品</a>
                         <a class="btn btn-outline-info" th:href="@{/users}" sec:authorize="hasRole('ADMIN')">使用者管理</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4" th:if="${isAuthenticated}">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">我的訂單</h2>
+                    <a class="btn btn-sm btn-outline-primary" th:href="@{/orders/mine}">查看全部</a>
+                </div>
+                <div class="card-body" th:if="${#lists.isEmpty(recentOrders)}">
+                    <p class="text-muted mb-0">目前沒有任何訂單。</p>
+                </div>
+                <div class="card-body" th:if="${!#lists.isEmpty(recentOrders)}">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th scope="col">編號</th>
+                                <th scope="col">總價</th>
+                                <th scope="col">付款方式</th>
+                                <th scope="col">狀態</th>
+                                <th scope="col">建立時間</th>
+                                <th scope="col">操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="order : ${recentOrders}">
+                                <th scope="row" th:text="${order.id}"></th>
+                                <td th:text="${#numbers.formatDecimal(order.totalPrice, 1, 'COMMA', 2, 'POINT')}"></td>
+                                <td th:text="${order.paymentMethod != null ? order.paymentMethod.displayName : '未設定'}"></td>
+                                <td th:text="${order.status != null ? order.status.displayName : '未設定'}"></td>
+                                <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm') : '未記錄'}"></td>
+                                <td><a class="btn btn-sm btn-outline-primary" th:href="@{'/orders/' + ${order.id}}">查看</a></td>
+                            </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

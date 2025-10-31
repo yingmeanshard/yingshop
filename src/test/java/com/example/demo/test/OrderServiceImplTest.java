@@ -53,10 +53,12 @@ public class OrderServiceImplTest {
             return null;
         }).when(orderDAO).save(any(Order.class));
 
-        Order order = orderService.createOrder(cart, user);
+        Order order = orderService.createOrder(cart, user, PaymentMethod.CASH_ON_DELIVERY);
 
         assertNotNull(order);
         assertEquals(OrderStatus.PENDING_PAYMENT, order.getStatus());
+        assertEquals(PaymentMethod.CASH_ON_DELIVERY, order.getPaymentMethod());
+        assertNotNull("建立訂單時計錄建立時間", order.getCreatedAt());
         assertEquals(BigDecimal.valueOf(240), order.getTotalPrice());
         assertEquals(1, order.getItems().size());
         assertEquals(Long.valueOf(99L), order.getId());

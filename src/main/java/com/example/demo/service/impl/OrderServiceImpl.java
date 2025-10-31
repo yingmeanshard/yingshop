@@ -31,17 +31,21 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order createOrder(Cart cart, User user) {
+    public Order createOrder(Cart cart, User user, PaymentMethod paymentMethod) {
         if (cart == null || cart.isEmpty()) {
             throw new IllegalArgumentException("Cart must contain at least one item to create an order");
         }
         if (user == null) {
             throw new IllegalArgumentException("User must not be null when creating an order");
         }
+        if (paymentMethod == null) {
+            throw new IllegalArgumentException("Payment method must be provided");
+        }
 
         Order order = new Order();
         order.setUser(user);
         order.setStatus(OrderStatus.PENDING_PAYMENT);
+        order.setPaymentMethod(paymentMethod);
         order.setCreatedAt(LocalDateTime.now());
 
         BigDecimal total = BigDecimal.ZERO;

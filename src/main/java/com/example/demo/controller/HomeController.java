@@ -1,6 +1,8 @@
 package com.example.demo.controller;
 
+import com.example.demo.model.Order;
 import com.example.demo.model.User;
+import com.example.demo.service.OrderService;
 import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -14,10 +16,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class HomeController {
 
     private final UserService userService;
+    private final OrderService orderService;
 
     @Autowired
-    public HomeController(UserService userService) {
+    public HomeController(UserService userService, OrderService orderService) {
         this.userService = userService;
+        this.orderService = orderService;
     }
 
     @GetMapping("/")
@@ -31,6 +35,9 @@ public class HomeController {
         if (isAuthenticated) {
             User current = userService.getUserByEmail(authentication.getName());
             model.addAttribute("currentUser", current);
+            if (current != null) {
+                model.addAttribute("recentOrders", orderService.listOrdersByUser(current));
+            }
         }
         model.addAttribute("loginError", error != null);
         return "home";

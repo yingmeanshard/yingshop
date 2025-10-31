@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.model.Address;
 import com.example.demo.model.Cart;
+import com.example.demo.model.PaymentMethod;
 import com.example.demo.model.Product;
 import com.example.demo.model.User;
 import com.example.demo.service.AddressService;
@@ -109,7 +110,9 @@ public class CartController {
         if (user != null) {
             model.addAttribute("addresses", addressService.findByUser(user.getId()));
             model.addAttribute("defaultAddressId", user.getDefaultAddressId());
+            model.addAttribute("currentUser", user);
         }
+        model.addAttribute("paymentMethods", PaymentMethod.values());
         return "cart";
     }
 

@@ -26,11 +26,29 @@ public class Order {
     @Column(nullable = false, length = 32)
     private OrderStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", nullable = false, length = 32)
+    private PaymentMethod paymentMethod = PaymentMethod.CASH_ON_DELIVERY;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<OrderItem> items = new ArrayList<>();
+
+    @PrePersist
+    public void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 
     public Long getId() {
         return id;
@@ -62,6 +80,14 @@ public class Order {
 
     public void setStatus(OrderStatus status) {
         this.status = status;
+    }
+
+    public PaymentMethod getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod == null ? PaymentMethod.CASH_ON_DELIVERY : paymentMethod;
     }
 
     public LocalDateTime getCreatedAt() {
