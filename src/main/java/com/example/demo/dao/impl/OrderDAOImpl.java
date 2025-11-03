@@ -9,6 +9,8 @@ import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 @Repository
@@ -47,9 +49,12 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public List<Order> findAll() {
-        return getCurrentSession()
-                .createQuery("from Order order by createdAt desc", Order.class)
+        List<Order> results = getCurrentSession()
+                .createQuery(
+                        "select distinct o from Order o left join fetch o.items order by o.createdAt desc, o.id desc",
+                        Order.class)
                 .list();
+        return deduplicateById(results);
     }
 
     @Override
@@ -58,8 +63,27 @@ public class OrderDAOImpl implements OrderDAO {
             return List.of();
         }
         Query<Order> query = getCurrentSession()
-                .createQuery("from Order where user.id = :userId order by createdAt desc", Order.class);
+                .createQuery(
+                        "select distinct o from Order o left join fetch o.items "
+                                + "where o.user.id = :userId order by o.createdAt desc, o.id desc",
+                        Order.class);
         query.setParameter("userId", user.getId());
-        return query.list();
+        List<Order> results = query.list();
+        return deduplicateById(results);
+    }
+
+    private List<Order> deduplicateById(List<Order> orders) {
+        if (orders.isEmpty()) {
+            return orders;
+        }
+        List<Order> unique = new ArrayList<>(orders.size());
+        LinkedHashSet<Long> seen = new LinkedHashSet<>();
+        for (Order order : orders) {
+            Long id = order != null ? order.getId() : null;
+            if (id == null || seen.add(id)) {
+                unique.add(order);
+            }
+        }
+        return unique;
     }
 }

@@ -21,6 +21,8 @@ import org.thymeleaf.templatemode.TemplateMode;
 
 // ★ 新增：Thymeleaf Security Extras Dialect（對應 Spring Security 5）
 import org.thymeleaf.extras.springsecurity5.dialect.SpringSecurityDialect;
+// ★ 新增：Java 8 Time Dialect，提供 #temporals 工具
+import org.thymeleaf.extras.java8time.dialect.Java8TimeDialect;
 
 @Configuration
 @EnableWebMvc
@@ -52,6 +54,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
         // ★ 關鍵：掛上 Security Dialect，sec:authorize 才會在伺服器端生效
         templateEngine.addDialect(springSecurityDialect);
+        // ★ 掛上 Java 8 Time Dialect，支援 #temporals
+        templateEngine.addDialect(new Java8TimeDialect());
 
         return templateEngine;
     }

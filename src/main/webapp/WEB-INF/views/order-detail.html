@@ -17,6 +17,8 @@
                 <li class="nav-item"><a class="nav-link" th:href="@{/}">首頁</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/products}">商品列表</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/cart}">購物車</a></li>
+                <li class="nav-item" sec:authorize="isAnonymous()"><a class="nav-link" th:href="@{'/#authSection'}">我的訂單</a></li>
+                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/orders/mine}">我的訂單</a></li>
                 <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/account/profile}">個人資料</a></li>
                 <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link active" th:href="@{/orders}">訂單管理</a>
@@ -68,7 +70,7 @@
             <div class="col-sm-6 col-lg-4">
                 <div class="text-muted">狀態</div>
                 <span class="badge rounded-pill"
-                      th:classappend="${order.status == T(com.example.demo.model.OrderStatus).SHIPPED ? ' bg-success' : order.status == T(com.example.demo.model.OrderStatus).PAID ? ' bg-primary' : ' bg-warning text-dark'}"
+                      th:classappend="${order.status == T(com.example.demo.model.OrderStatus).SHIPPED ? ' bg-success' : order.status == T(com.example.demo.model.OrderStatus).PENDING_SHIPMENT ? ' bg-primary' : ' bg-warning text-dark'}"
                       th:text="${order.status != null ? order.status.displayName : '未設定'}"></span>
             </div>
             <div class="col-sm-6 col-lg-4">
@@ -93,7 +95,7 @@
                 </div>
                 <div class="col-12 d-flex align-items-end gap-2">
                     <button type="submit" class="btn btn-primary">更新</button>
-                    <small class="text-muted">狀態依序為：待付款 → 已付款 → 已發貨。</small>
+                    <small class="text-muted">狀態依序為：待付款 → 待確認/待處理 → 待出貨 → 已出貨。</small>
                 </div>
             </form>
         </div>

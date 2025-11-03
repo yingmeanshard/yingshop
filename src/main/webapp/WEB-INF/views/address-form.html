@@ -17,6 +17,8 @@
                 <li class="nav-item"><a class="nav-link" th:href="@{/}">首頁</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/products}">商品列表</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/cart}">購物車</a></li>
+                <li class="nav-item" sec:authorize="isAnonymous()"><a class="nav-link" th:href="@{'/#authSection'}">我的訂單</a></li>
+                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/orders/mine}">我的訂單</a></li>
                 <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link active" th:href="@{/account/profile}">個人資料</a></li>
                 <li class="nav-item" sec:authorize="hasRole('ADMIN')"><a class="nav-link" th:href="@{/orders}">訂單管理</a></li>
             </ul>

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -38,11 +39,13 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     private Collection<? extends GrantedAuthority> authoritiesFor(User user) {
-        if (user.getRole() == UserRole.ADMIN) {
-            return java.util.List.of(
-                    new SimpleGrantedAuthority("ROLE_ADMIN"),
-                    new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+        UserRole role = user.getRole();
+        SimpleGrantedAuthority customerAuthority = new SimpleGrantedAuthority(UserRole.CUSTOMER.getAuthority());
+        if (role == UserRole.ADMIN) {
+            return List.of(
+                    new SimpleGrantedAuthority(UserRole.ADMIN.getAuthority()),
+                    customerAuthority);
         }
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+        return Collections.singletonList(customerAuthority);
     }
 }

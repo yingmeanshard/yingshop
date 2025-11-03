@@ -33,7 +33,14 @@ public class OrderController {
 
     @ModelAttribute("orderStatuses")
     public OrderStatus[] orderStatuses() {
-        return OrderStatus.values();
+        // 僅提供需求指定的狀態於前端選單（隱藏舊的 PAID）
+        return new OrderStatus[] {
+                OrderStatus.PENDING_PAYMENT,
+                OrderStatus.PENDING_CONFIRMATION,
+                OrderStatus.PENDING_SHIPMENT,
+                OrderStatus.PROCESSING,
+                OrderStatus.SHIPPED
+        };
     }
 
     @ModelAttribute("paymentMethods")
@@ -41,7 +48,7 @@ public class OrderController {
         return PaymentMethod.values();
     }
     @GetMapping
-    public String listOrders(@RequestParam(value = "userId", required = false) Long userId,
+    public String listOrders(@RequestParam(value = "userId", required = false) String userIdParam,
                              Model model,
                              Authentication authentication) {
         boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
@@ -53,17 +60,26 @@ public class OrderController {
         }
 
         List<Order> orders;
-        if (userId != null) {
-            User user = userService.getUserById(userId);
-            if (user == null) {
-                model.addAttribute("errorMessage", "找不到指定的使用者。");
-                orders = List.of();
-            } else {
-                orders = orderService.listOrdersByUser(user);
-                model.addAttribute("selectedUserId", userId);
+        String trimmed = userIdParam == null ? null : userIdParam.trim();
+        if (trimmed != null && !trimmed.isEmpty()) {
+            try {
+                Long userId = Long.parseLong(trimmed);
+                User user = userService.getUserById(userId);
+                if (user == null) {
+                    model.addAttribute("errorMessage", "找不到指定的使用者。");
+                    orders = List.of();
+                } else {
+                    orders = orderService.listOrdersByUser(user);
+                    model.addAttribute("selectedUserId", userId);
+                }
+            } catch (NumberFormatException ex) {
+                // 無效的 userId，視為未指定 → 顯示全部
+                orders = orderService.getAllOrders();
+                model.addAttribute("selectedUserId", null);
             }
         } else {
             orders = orderService.getAllOrders();
+            model.addAttribute("selectedUserId", null);
         }
         model.addAttribute("orders", orders);
         model.addAttribute("users", userService.getAllUsers());

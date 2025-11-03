@@ -1,7 +1,6 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.dao.OrderDAO;
-import com.example.demo.dao.OrderItemDAO;
 import com.example.demo.dao.ProductDAO;
 import com.example.demo.model.*;
 import com.example.demo.service.OrderService;
@@ -11,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -20,13 +18,11 @@ import java.util.Objects;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderDAO orderDAO;
-    private final OrderItemDAO orderItemDAO;
     private final ProductDAO productDAO;
 
     @Autowired
-    public OrderServiceImpl(OrderDAO orderDAO, OrderItemDAO orderItemDAO, ProductDAO productDAO) {
+    public OrderServiceImpl(OrderDAO orderDAO, ProductDAO productDAO) {
         this.orderDAO = orderDAO;
-        this.orderItemDAO = orderItemDAO;
         this.productDAO = productDAO;
     }
 
@@ -49,7 +45,7 @@ public class OrderServiceImpl implements OrderService {
         order.setCreatedAt(LocalDateTime.now());
 
         BigDecimal total = BigDecimal.ZERO;
-        List<OrderItem> orderItems = new ArrayList<>();
+        boolean hasOrderItems = false;
         for (CartItem cartItem : cart.getItemList()) {
             Product product = productDAO.findById(cartItem.getProductId());
             if (product == null) {
@@ -63,20 +59,16 @@ public class OrderServiceImpl implements OrderService {
             orderItem.setQuantity(cartItem.getQuantity());
             orderItem.setUnitPrice(cartItem.getUnitPrice());
             order.addItem(orderItem);
-            orderItems.add(orderItem);
             total = total.add(orderItem.getSubtotal());
+            hasOrderItems = true;
         }
         order.setTotalPrice(total);
 
-        if (orderItems.isEmpty()) {
+        if (!hasOrderItems) {
             throw new IllegalArgumentException("Cart must contain items with quantity greater than zero");
         }
 
         orderDAO.save(order);
-        // Persist order items explicitly to ensure they are stored in the same transaction.
-        for (OrderItem orderItem : orderItems) {
-            orderItemDAO.save(orderItem);
-        }
 
         return order;
     }
@@ -133,10 +125,26 @@ public class OrderServiceImpl implements OrderService {
         }
         switch (currentStatus) {
             case PENDING_PAYMENT:
-                return nextStatus == OrderStatus.PAID;
+                // 待付款之後可以進入：已付款（舊流程相容）/待確認/待處理
+                return nextStatus == OrderStatus.PAID
+                        || nextStatus == OrderStatus.PENDING_CONFIRMATION
+                        || nextStatus == OrderStatus.PROCESSING;
             case PAID:
+                // 已付款（相容舊流程）後可進入待出貨或已出貨
+                return nextStatus == OrderStatus.PENDING_SHIPMENT
+                        || nextStatus == OrderStatus.SHIPPED;
+            case PENDING_CONFIRMATION:
+                // 待確認後可進入待處理或待出貨
+                return nextStatus == OrderStatus.PROCESSING
+                        || nextStatus == OrderStatus.PENDING_SHIPMENT;
+            case PROCESSING:
+                // 待處理後可進入待出貨
+                return nextStatus == OrderStatus.PENDING_SHIPMENT;
+            case PENDING_SHIPMENT:
+                // 待出貨後可進入已出貨
                 return nextStatus == OrderStatus.SHIPPED;
             case SHIPPED:
+                // 已出貨不可再往後
                 return nextStatus == OrderStatus.SHIPPED;
             default:
                 return false;

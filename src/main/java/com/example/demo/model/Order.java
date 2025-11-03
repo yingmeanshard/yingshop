@@ -1,5 +1,7 @@
 package com.example.demo.model;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -30,7 +32,8 @@ public class Order {
     @Column(name = "payment_method", nullable = false, length = 32)
     private PaymentMethod paymentMethod = PaymentMethod.CASH_ON_DELIVERY;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
@@ -38,13 +41,6 @@ public class Order {
 
     @PrePersist
     public void onCreate() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-    }
-
-    @PreUpdate
-    public void onUpdate() {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }

@@ -1,14 +1,12 @@
 package com.example.demo.test;
 
 import com.example.demo.dao.OrderDAO;
-import com.example.demo.dao.OrderItemDAO;
 import com.example.demo.dao.ProductDAO;
 import com.example.demo.model.*;
 import com.example.demo.service.impl.OrderServiceImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -22,15 +20,13 @@ public class OrderServiceImplTest {
     @Mock
     private OrderDAO orderDAO;
     @Mock
-    private OrderItemDAO orderItemDAO;
-    @Mock
     private ProductDAO productDAO;
 
     private OrderServiceImpl orderService;
 
     @Before
     public void setUp() {
-        orderService = new OrderServiceImpl(orderDAO, orderItemDAO, productDAO);
+        orderService = new OrderServiceImpl(orderDAO, productDAO);
     }
 
     @Test
@@ -64,9 +60,7 @@ public class OrderServiceImplTest {
         assertEquals(Long.valueOf(99L), order.getId());
 
         verify(orderDAO).save(order);
-        ArgumentCaptor<OrderItem> itemCaptor = ArgumentCaptor.forClass(OrderItem.class);
-        verify(orderItemDAO).save(itemCaptor.capture());
-        OrderItem savedItem = itemCaptor.getValue();
+        OrderItem savedItem = order.getItems().get(0);
         assertEquals(2, savedItem.getQuantity());
         assertEquals(product, savedItem.getProduct());
     }

@@ -4,7 +4,10 @@ public enum OrderStatus {
 
     PENDING_PAYMENT("待付款"),
     PAID("已付款"),
-    SHIPPED("已發貨");
+    PENDING_CONFIRMATION("待確認"),
+    PENDING_SHIPMENT("待出貨"),
+    PROCESSING("待處理"),
+    SHIPPED("已出貨");
 
     private final String displayName;
 

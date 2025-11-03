@@ -4,6 +4,8 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.demo.model.converter.UserRoleAttributeConverter;
+
 @Entity
 @Table(name = "users")
 public class User {
@@ -30,7 +32,7 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Address> addresses = new ArrayList<>();
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = UserRoleAttributeConverter.class)
     @Column(name = "role", nullable = false)
     private UserRole role = UserRole.CUSTOMER;
 
