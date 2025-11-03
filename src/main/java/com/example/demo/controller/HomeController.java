@@ -24,7 +24,7 @@ public class HomeController {
         this.orderService = orderService;
     }
 
-    @GetMapping("/")
+    @GetMapping({"/", ""})
     public String home(Authentication authentication,
                        @RequestParam(value = "error", required = false) String error,
                        Model model) {
@@ -41,5 +41,10 @@ public class HomeController {
         }
         model.addAttribute("loginError", error != null);
         return "home";
+    }
+
+    @GetMapping("/yingshop")
+    public String homeAlias() {
+        return "redirect:/";
     }
 }

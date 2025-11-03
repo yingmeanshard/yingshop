@@ -1,44 +1,88 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="zh-Hant"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>YingShop 首頁</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 </head>
 <body class="bg-light">
+
+<!--
+  【Navbar 顯示策略（互斥）】
+  1) 未登入：只顯示「登入」「註冊」，另顯示「登出(反白)」
+  2) 顧客登入(非ADMIN)：只顯示「登出(可按)」，另顯示「登入/註冊(反白)」，不顯示「管理者模式」
+  3) 管理者登入：只顯示「管理者模式」與「登出(反白)」，不顯示登入/註冊
+  ※ 若你同時看到三塊，代表 Thymeleaf Security Dialect 未生效。
+-->
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
         <a class="navbar-brand" th:href="@{/}">YingShop</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="切換選單">
             <span class="navbar-toggler-icon"></span>
         </button>
+
         <div class="collapse navbar-collapse" id="navbarNav">
+
+            <!-- 左側導覽列 -->
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link active" th:href="@{/}">首頁</a></li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       th:classappend="${#httpServletRequest.requestURI=='/' ? ' active' : ''}"
+                       th:href="@{/}">首頁</a>
+                </li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/products}">商品列表</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/cart}">購物車</a></li>
-                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/account/profile}">個人資料</a></li>
-                <li class="nav-item" sec:authorize="hasRole('ADMIN')"><a class="nav-link" th:href="@{/orders}">訂單管理</a></li>
+                <li class="nav-item" sec:authorize="isAuthenticated()">
+                    <a class="nav-link" th:href="@{/account/profile}">個人資料</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" th:href="@{/orders}">訂單管理</a>
+                </li>
             </ul>
-            <div class="d-flex align-items-center gap-2">
-                <span class="text-white-50" sec:authorize="hasRole('ADMIN')">管理者模式</span>
-                <a class="btn btn-outline-light" href="#authSection" sec:authorize="isAnonymous()">登入</a>
-                <a class="btn btn-outline-light" th:href="@{/register}" sec:authorize="isAnonymous()">註冊</a>
-                <button class="btn btn-outline-light disabled" type="button" disabled sec:authorize="isAnonymous()">登出</button>
-                <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
-                    <button class="btn btn-outline-light" type="submit">登出</button>
-                </form>
+
+            <!-- 右上角：三個情境互斥顯示 -->
+            <div class="d-flex align-items-center gap-2 ms-auto">
+
+                <!-- [1] 未登入 -->
+                <div class="d-flex align-items-center gap-2" sec:authorize="isAnonymous()">
+                    <a class="btn btn-outline-light" href="#authSection">登入</a>
+                    <a class="btn btn-outline-light" th:href="@{/register}">註冊</a>
+                    <button class="btn btn-outline-light disabled" type="button" disabled aria-disabled="true">登出</button>
+                </div>
+
+                <!-- [2] 顧客登入（非 ADMIN） -->
+                <div class="d-flex align-items-center gap-2" sec:authorize="isAuthenticated() and !hasRole('ADMIN')">
+                    <a class="btn btn-outline-light disabled" href="#" tabindex="-1" role="button" aria-disabled="true">登入</a>
+                    <a class="btn btn-outline-light disabled" href="#" tabindex="-1" role="button" aria-disabled="true">註冊</a>
+                    <form th:action="@{/logout}" method="post" class="m-0">
+                        <button class="btn btn-outline-light" type="submit">登出</button>
+                    </form>
+                </div>
+
+                <!-- [3] 管理者登入 -->
+                <div class="d-flex align-items-center gap-2" sec:authorize="hasRole('ADMIN')">
+                    <span class="badge text-dark bg-warning">管理者模式</span>
+                    <button class="btn btn-outline-light disabled" type="button" disabled aria-disabled="true">登出</button>
+                </div>
+
             </div>
         </div>
     </div>
 </nav>
 
 <main class="container py-5" id="authSection">
+    <!-- 訊息列 -->
     <div th:if="${loginError and !isAuthenticated}" class="alert alert-danger">登入失敗，請確認帳號、密碼與身分。</div>
     <div th:if="${param.roleError}" class="alert alert-warning">此帳號沒有管理者權限，請以顧客身分登入。</div>
     <div th:if="${param.logout}" class="alert alert-success">您已成功登出。</div>
     <div th:if="${registrationSuccess}" class="alert alert-success" th:text="${registrationSuccess}"></div>
 
+    <!-- 已登入首頁（顧客/管理者共用；細項權限定義） -->
     <div th:if="${isAuthenticated}" class="row g-4">
         <div class="col-12">
             <div class="card shadow-sm">
@@ -59,6 +103,7 @@
         </div>
     </div>
 
+    <!-- 已登入 - 訂單 -->
     <div class="row g-4" th:if="${isAuthenticated}">
         <div class="col-12">
             <div class="card shadow-sm">
@@ -99,10 +144,11 @@
         </div>
     </div>
 
+    <!-- 未登入首頁 + 登入表單 -->
     <div class="row g-4 align-items-center" th:if="${!isAuthenticated}">
         <div class="col-lg-6">
             <div class="p-5 bg-white rounded-3 shadow-sm">
-                <h1 class="display-5 fw-bold" th:text="#{home.message}">歡迎光臨 YingShop</h1>
+                <h1 class="display-5 fw-bold" th:text="#{home.message}">Welcome to YingShop!</h1>
                 <p class="lead mt-3">精選商品與貼心服務，立即開始你的購物旅程。</p>
                 <div class="mt-4 d-flex flex-wrap gap-2">
                     <a class="btn btn-primary btn-lg" th:href="@{/products}">瀏覽商品</a>
@@ -114,6 +160,7 @@
                 </div>
             </div>
         </div>
+
         <div class="col-lg-5 offset-lg-1">
             <div class="card shadow-sm">
                 <div class="card-header bg-dark text-white text-center">
@@ -122,6 +169,7 @@
                 <div class="card-body">
                     <p class="text-muted">請選擇身份並輸入帳號密碼開始使用。</p>
                     <div th:if="${loginError}" class="alert alert-danger">帳號或密碼錯誤，請再試一次。</div>
+
                     <form th:action="@{/login}" method="post" class="row g-3">
                         <div class="col-12">
                             <label class="form-label">登入身分</label>

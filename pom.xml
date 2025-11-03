@@ -159,6 +159,7 @@
     </dependencies>
     
     <build>
+        <finalName>yingshop</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

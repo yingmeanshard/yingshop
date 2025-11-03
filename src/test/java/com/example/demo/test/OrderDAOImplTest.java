@@ -17,15 +17,18 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OrderDAOImplTest {
 
     @Mock
     private SessionFactory sessionFactory;
+
     @Mock
     private Session session;
+
     @Mock
     private Query<Order> query;
 
@@ -44,13 +47,13 @@ public class OrderDAOImplTest {
         user.setId(1L);
 
         List<Order> expectedOrders = List.of(new Order(), new Order());
-        when(query.setParameter(eq("user"), eq(user))).thenReturn(query);
+        when(query.setParameter(eq("userId"), eq(user.getId()))).thenReturn(query);
         when(query.list()).thenReturn(expectedOrders);
 
         List<Order> actualOrders = orderDAO.findByUser(user);
 
         assertEquals(expectedOrders, actualOrders);
-        verify(query).setParameter("user", user);
+        verify(query).setParameter("userId", user.getId());
         verify(query).list();
     }
 }
