@@ -13,7 +13,7 @@ import org.springframework.security.web.authentication.SavedRequestAwareAuthenti
 public class RoleAwareAuthenticationSuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
 
     public RoleAwareAuthenticationSuccessHandler() {
-        setDefaultTargetUrl("/account/profile");
+        setDefaultTargetUrl("/products");
         setAlwaysUseDefaultTargetUrl(true);
     }
 
@@ -21,20 +21,19 @@ public class RoleAwareAuthenticationSuccessHandler extends SavedRequestAwareAuth
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws ServletException, IOException {
-        String roleHint = request.getParameter("roleHint");
-        boolean wantsAdmin = "ADMIN".equalsIgnoreCase(roleHint);
         boolean isAdmin = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch("ROLE_ADMIN"::equals);
-        if (wantsAdmin && !isAdmin) {
-            SecurityContextHolder.clearContext();
-            HttpSession session = request.getSession(false);
-            if (session != null) {
-                session.invalidate();
-            }
-            getRedirectStrategy().sendRedirect(request, response, "/?roleError");
-            return;
+        boolean isStaff = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_STAFF"::equals);
+        
+        if (isAdmin) {
+            getRedirectStrategy().sendRedirect(request, response, "/admin");
+        } else if (isStaff) {
+            getRedirectStrategy().sendRedirect(request, response, "/admin/staff");
+        } else {
+            super.onAuthenticationSuccess(request, response, authentication);
         }
-        super.onAuthenticationSuccess(request, response, authentication);
     }
 }

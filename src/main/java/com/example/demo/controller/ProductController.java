@@ -36,6 +36,12 @@ public class ProductController {
             products = productService.getProductsByCategory(category);
         }
 
+        // 顯示所有商品（不根據 listed 過濾）
+        // 如果將來需要根據上下架狀態過濾，可以取消下面的註解
+        // products = products.stream()
+        //         .filter(p -> p.getListed() == null || p.getListed())
+        //         .collect(Collectors.toList());
+
         products.sort(Comparator.comparing(Product::getId, Comparator.nullsLast(Long::compareTo)));
 
         model.addAttribute("products", products);

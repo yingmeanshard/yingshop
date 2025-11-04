@@ -4,6 +4,7 @@ import java.util.Locale;
 
 public enum UserRole {
     ADMIN("ROLE_ADMIN"),
+    STAFF("ROLE_STAFF"),
     CUSTOMER("ROLE_CUSTOMER");
 
     private final String persistedValue;

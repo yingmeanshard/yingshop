@@ -40,18 +40,18 @@
                 <li class="nav-item" sec:authorize="isAnonymous()">
                     <a class="nav-link" th:href="@{'/#authSection'}">我的訂單</a>
                 </li>
-                <li class="nav-item" sec:authorize="isAuthenticated()">
+                <li class="nav-item" sec:authorize="isAuthenticated() and !hasRole('ADMIN') and !hasRole('STAFF')">
                     <a class="nav-link" th:href="@{/orders/mine}">我的訂單</a>
                 </li>
-                <li class="nav-item" sec:authorize="isAuthenticated()">
+                <li class="nav-item" sec:authorize="isAuthenticated() and !hasRole('ADMIN') and !hasRole('STAFF')">
                     <a class="nav-link" th:href="@{/account/profile}">個人資料</a>
                 </li>
                 <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                    <a class="nav-link" th:href="@{/orders}">訂單管理</a>
+                    <a class="nav-link" th:href="@{/admin}">後台管理</a>
                 </li>
             </ul>
 
-            <!-- 右上角：三個情境互斥顯示 -->
+            <!-- 右上角：四個情境互斥顯示 -->
             <div class="d-flex align-items-center gap-2 ms-auto">
 
                 <!-- [1] 未登入 -->
@@ -73,7 +73,17 @@
                 <!-- [3] 管理者登入 -->
                 <div class="d-flex align-items-center gap-2" sec:authorize="hasRole('ADMIN')">
                     <span class="badge text-dark bg-warning">管理者模式</span>
-                    <button class="btn btn-outline-light disabled" type="button" disabled aria-disabled="true">登出</button>
+                    <form th:action="@{/logout}" method="post" class="m-0">
+                        <button class="btn btn-outline-light" type="submit">登出</button>
+                    </form>
+                </div>
+
+                <!-- [4] 員工登入 -->
+                <div class="d-flex align-items-center gap-2" sec:authorize="hasRole('STAFF') and !hasRole('ADMIN')">
+                    <span class="badge text-dark bg-info">員工模式</span>
+                    <form th:action="@{/logout}" method="post" class="m-0">
+                        <button class="btn btn-outline-light" type="submit">登出</button>
+                    </form>
                 </div>
 
             </div>
@@ -84,7 +94,7 @@
 <main class="container py-5" id="authSection">
     <!-- 訊息列 -->
     <div th:if="${loginError and !isAuthenticated}" class="alert alert-danger">登入失敗，請確認帳號、密碼與身分。</div>
-    <div th:if="${param.roleError}" class="alert alert-warning">此帳號沒有管理者權限，請以顧客身分登入。</div>
+
     <div th:if="${param.logout}" class="alert alert-success">您已成功登出。</div>
     <div th:if="${registrationSuccess}" class="alert alert-success" th:text="${registrationSuccess}"></div>
 
@@ -95,22 +105,66 @@
                 <div class="card-body">
                     <h1 class="h3 mb-3">歡迎回來，<span th:text="${currentUser != null ? currentUser.name : '使用者'}"></span>！</h1>
                     <p class="text-muted mb-4">選擇下方快速功能，繼續您的工作或購物旅程。</p>
-                    <div class="d-flex flex-wrap gap-2">
-                        <a class="btn btn-primary" th:href="@{/products}">瀏覽商品</a>
+                    <div class="d-flex flex-wrap gap-2" sec:authorize="!hasRole('ADMIN')">
                         <a class="btn btn-outline-primary" th:href="@{/cart}">開啟購物車</a>
                         <a class="btn btn-outline-secondary" th:href="@{/account/profile}">管理個人資料</a>
                         <a class="btn btn-outline-secondary" th:href="@{'/account/profile#addressesSection'}">管理收貨資料</a>
-                        <a class="btn btn-outline-dark" th:href="@{/orders/mine}" sec:authorize="isAuthenticated()">我的訂單</a>
-                        <a class="btn btn-outline-warning" th:href="@{/products/create}" sec:authorize="hasRole('ADMIN')">建立新商品</a>
-                        <a class="btn btn-outline-info" th:href="@{/users}" sec:authorize="hasRole('ADMIN')">使用者管理</a>
+                        <a class="btn btn-outline-dark" th:href="@{/orders/mine}">我的訂單</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 已登入 - 訂單 -->
-    <div class="row g-4" th:if="${isAuthenticated}">
+    <!-- 已登入 - 後台管理（僅管理者） -->
+    <div class="row g-4" th:if="${isAuthenticated and hasRole('ADMIN')}">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">後台管理系統</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <!-- 帳號與權限管理 -->
+                        <div class="col-md-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">帳號與權限管理</h5>
+                                    <p class="card-text text-muted">管理使用者帳號、角色與權限設定</p>
+                                    <a class="btn btn-outline-primary" th:href="@{/users}">前往帳號管理</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 商品管理 -->
+                        <div class="col-md-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">商品管理</h5>
+                                    <p class="card-text text-muted">管理商品資訊、分類與庫存</p>
+                                    <a class="btn btn-outline-primary" th:href="@{/admin/products}">前往商品管理</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 訂單管理 -->
+                        <div class="col-md-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">訂單管理</h5>
+                                    <p class="card-text text-muted">檢視與管理所有訂單</p>
+                                    <a class="btn btn-outline-primary" th:href="@{/orders}">前往訂單管理</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 已登入 - 訂單（僅顧客） -->
+    <div class="row g-4" th:if="${isAuthenticated and !hasRole('ADMIN')}">
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -173,20 +227,10 @@
                     <h2 class="h4 mb-0">登入 YingShop</h2>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted">請選擇身份並輸入帳號密碼開始使用。</p>
+                    <p class="text-muted">請輸入帳號密碼開始使用。</p>
                     <div th:if="${loginError}" class="alert alert-danger">帳號或密碼錯誤，請再試一次。</div>
 
                     <form th:action="@{/login}" method="post" class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label">登入身分</label>
-                            <div class="btn-group w-100" role="group">
-                                <input type="radio" class="btn-check" name="roleHint" id="loginCustomer" value="CUSTOMER" checked>
-                                <label class="btn btn-outline-secondary" for="loginCustomer">顧客</label>
-                                <input type="radio" class="btn-check" name="roleHint" id="loginAdmin" value="ADMIN">
-                                <label class="btn btn-outline-secondary" for="loginAdmin">管理者</label>
-                            </div>
-                            <small class="text-muted d-block mt-1">實際權限依帳號設定為準。</small>
-                        </div>
                         <div class="col-12">
                             <label class="form-label" for="username">帳號 (Email)</label>
                             <input type="text" class="form-control" id="username" name="username" required>

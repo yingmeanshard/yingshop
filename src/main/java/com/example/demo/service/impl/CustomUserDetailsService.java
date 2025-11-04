@@ -45,6 +45,10 @@ public class CustomUserDetailsService implements UserDetailsService {
             return List.of(
                     new SimpleGrantedAuthority(UserRole.ADMIN.getAuthority()),
                     customerAuthority);
+        } else if (role == UserRole.STAFF) {
+            return List.of(
+                    new SimpleGrantedAuthority(UserRole.STAFF.getAuthority()),
+                    customerAuthority);
         }
         return Collections.singletonList(customerAuthority);
     }

@@ -53,9 +53,12 @@ public class OrderController {
                              Authentication authentication) {
         boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isStaff = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_STAFF"));
         model.addAttribute("isAdmin", isAdmin);
+        model.addAttribute("isAdminOrStaff", isAdmin || isStaff);
 
-        if (!isAdmin) {
+        if (!isAdmin && !isStaff) {
             return "redirect:/orders/mine";
         }
 
@@ -150,13 +153,15 @@ public class OrderController {
         }
         boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isStaff = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_STAFF"));
         User currentUser = null;
         if (authentication != null && authentication.isAuthenticated()) {
             currentUser = userService.getUserByEmail(authentication.getName());
         }
         boolean isOwner = currentUser != null && order.getUser() != null
                 && Objects.equals(order.getUser().getId(), currentUser.getId());
-        if (!isAdmin) {
+        if (!isAdmin && !isStaff) {
             if (currentUser == null) {
                 return "redirect:/";
             }
@@ -166,7 +171,7 @@ public class OrderController {
         }
         model.addAttribute("order", order);
         model.addAttribute("paymentMethods", PaymentMethod.values());
-        model.addAttribute("isAdminView", isAdmin);
+        model.addAttribute("isAdminView", isAdmin || isStaff);
         return "order-detail";
     }
 
@@ -177,8 +182,10 @@ public class OrderController {
                                RedirectAttributes redirectAttributes) {
         boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        if (!isAdmin) {
-            redirectAttributes.addFlashAttribute("errorMessage", "只有管理者可以更新訂單狀態。");
+        boolean isStaff = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_STAFF"));
+        if (!isAdmin && !isStaff) {
+            redirectAttributes.addFlashAttribute("errorMessage", "只有管理者和員工可以更新訂單狀態。");
             return "redirect:/orders/" + id;
         }
         try {

@@ -61,6 +61,7 @@
                             <label class="form-label" for="role">權限</label>
                             <select class="form-select" th:field="*{role}" id="role">
                                 <option th:value="${T(com.example.demo.model.UserRole).CUSTOMER}">顧客</option>
+                                <option th:value="${T(com.example.demo.model.UserRole).STAFF}">員工</option>
                                 <option th:value="${T(com.example.demo.model.UserRole).ADMIN}">管理者</option>
                             </select>
                         </div>

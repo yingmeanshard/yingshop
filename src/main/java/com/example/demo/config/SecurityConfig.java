@@ -34,7 +34,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .antMatchers("/resources/**", "/login", "/register", "/users/request-reset", "/users/reset").permitAll()
-                        .antMatchers("/products/create", "/products/edit/**", "/products/delete/**", "/users/**").hasRole("ADMIN")
+                        .antMatchers("/admin/products/stock/**").hasAnyRole("ADMIN", "STAFF")
+                        .antMatchers("/admin/orders/*/status").hasAnyRole("ADMIN", "STAFF")
+                        .antMatchers("/admin/**", "/products/create", "/products/edit/**", "/products/delete/**", "/users/**").hasRole("ADMIN")
                         .antMatchers("/cart/**", "/account/**", "/addresses/**").authenticated()
                         .anyRequest().permitAll())
                 .formLogin(form -> form

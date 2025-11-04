@@ -26,6 +26,12 @@ public class Product {
     @Column(nullable = false)
     private String category;
 
+    @Column(nullable = false)
+    private Integer stock = 0;
+
+    @Column(nullable = false)
+    private Boolean listed = true;
+
     public Long getId() {
         return id;
     }
@@ -72,5 +78,21 @@ public class Product {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public Integer getStock() {
+        return stock;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock == null ? 0 : stock;
+    }
+
+    public Boolean getListed() {
+        return listed;
+    }
+
+    public void setListed(Boolean listed) {
+        this.listed = listed == null ? true : listed;
     }
 }

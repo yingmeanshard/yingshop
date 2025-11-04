@@ -18,18 +18,45 @@
                 <li class="nav-item"><a class="nav-link active" th:href="@{/products}">商品列表</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/cart}">購物車</a></li>
                 <li class="nav-item" sec:authorize="isAnonymous()"><a class="nav-link" th:href="@{'/#authSection'}">我的訂單</a></li>
-                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/orders/mine}">我的訂單</a></li>
-                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/account/profile}">個人資料</a></li>
-                <li class="nav-item" sec:authorize="hasRole('ADMIN')"><a class="nav-link" th:href="@{/orders}">訂單管理</a></li>
+                <li class="nav-item" sec:authorize="isAuthenticated() and !hasRole('ADMIN') and !hasRole('STAFF')"><a class="nav-link" th:href="@{/orders/mine}">我的訂單</a></li>
+                <li class="nav-item" sec:authorize="isAuthenticated() and !hasRole('ADMIN') and !hasRole('STAFF')"><a class="nav-link" th:href="@{/account/profile}">個人資料</a></li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')"><a class="nav-link" th:href="@{/admin}">後台管理</a></li>
             </ul>
-            <div class="d-flex align-items-center gap-2">
-                <span class="text-white-50" sec:authorize="hasRole('ADMIN')">管理者模式</span>
-                <a class="btn btn-outline-light" th:href="@{'/#authSection'}" sec:authorize="isAnonymous()">登入</a>
-                <a class="btn btn-outline-light" th:href="@{/register}" sec:authorize="isAnonymous()">註冊</a>
-                <button class="btn btn-outline-light disabled" type="button" disabled sec:authorize="isAnonymous()">登出</button>
-                <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
-                    <button class="btn btn-outline-light" type="submit">登出</button>
-                </form>
+            <!-- 右上角：四個情境互斥顯示 -->
+            <div class="d-flex align-items-center gap-2 ms-auto">
+
+                <!-- [1] 未登入 -->
+                <div class="d-flex align-items-center gap-2" sec:authorize="isAnonymous()">
+                    <a class="btn btn-outline-light" href="#authSection">登入</a>
+                    <a class="btn btn-outline-light" th:href="@{/register}">註冊</a>
+                    <button class="btn btn-outline-light disabled" type="button" disabled aria-disabled="true">登出</button>
+                </div>
+
+                <!-- [2] 顧客登入（非 ADMIN） -->
+                <div class="d-flex align-items-center gap-2" sec:authorize="isAuthenticated() and !hasRole('ADMIN')">
+                    <a class="btn btn-outline-light disabled" href="#" tabindex="-1" role="button" aria-disabled="true">登入</a>
+                    <a class="btn btn-outline-light disabled" href="#" tabindex="-1" role="button" aria-disabled="true">註冊</a>
+                    <form th:action="@{/logout}" method="post" class="m-0">
+                        <button class="btn btn-outline-light" type="submit">登出</button>
+                    </form>
+                </div>
+
+                <!-- [3] 管理者登入 -->
+                <div class="d-flex align-items-center gap-2" sec:authorize="hasRole('ADMIN')">
+                    <span class="badge text-dark bg-warning">管理者模式</span>
+                    <form th:action="@{/logout}" method="post" class="m-0">
+                        <button class="btn btn-outline-light" type="submit">登出</button>
+                    </form>
+                </div>
+
+                <!-- [4] 員工登入 -->
+                <div class="d-flex align-items-center gap-2" sec:authorize="hasRole('STAFF') and !hasRole('ADMIN')">
+                    <span class="badge text-dark bg-info">員工模式</span>
+                    <form th:action="@{/logout}" method="post" class="m-0">
+                        <button class="btn btn-outline-light" type="submit">登出</button>
+                    </form>
+                </div>
+
             </div>
         </div>
     </div>
@@ -82,7 +109,15 @@
            <div class="card-body d-flex flex-column">
                     <h5 class="card-title mb-2" th:text="${product.name}"></h5>
                     <p class="text-muted mb-1" th:text="${product.category}"></p>
-                    <p class="fw-semibold text-primary" th:text="${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}"></p>
+                    <p class="fw-semibold text-primary mb-1">
+                        <span th:text="${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}"></span>
+                        <span th:text="${#locale.language == 'zh' ? ' NTD' : ' USD'}"></span>
+                    </p>
+                    <p class="mb-2">
+                        <small th:if="${product.stock == null || product.stock == 0}" class="text-danger fw-bold">庫存不足</small>
+                        <small th:if="${product.stock != null && product.stock > 0 && product.stock < 5}" class="text-warning fw-bold">庫存緊張</small>
+                        <small th:if="${product.stock != null && product.stock >= 5}" class="text-success fw-bold">庫存充沛</small>
+                    </p>
                     <p class="flex-grow-1" th:text="${#strings.isEmpty(product.description) ? '此商品尚無描述。' : #strings.abbreviate(product.description, 80)}"></p>
                     <div class="d-flex flex-column gap-2">
                         <div class="btn-group" role="group">
