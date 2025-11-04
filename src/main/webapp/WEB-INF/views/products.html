@@ -79,20 +79,17 @@
                         <span th:if="${#strings.isEmpty(product.imageUrl)}" class="text-muted">暫無圖片</span>
                     </a>
                 </div>
-           <div class="card-body d-flex flex-column position-relative">
-                    <h5 class="card-title mb-2">
-                        <a th:href="@{'/products/detail/' + ${product.id}}"
-                           class="text-decoration-none stretched-link" th:text="${product.name}"></a>
-                    </h5>
+           <div class="card-body d-flex flex-column">
+                    <h5 class="card-title mb-2" th:text="${product.name}"></h5>
                     <p class="text-muted mb-1" th:text="${product.category}"></p>
                     <p class="fw-semibold text-primary" th:text="${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}"></p>
                     <p class="flex-grow-1" th:text="${#strings.isEmpty(product.description) ? '此商品尚無描述。' : #strings.abbreviate(product.description, 80)}"></p>
                     <div class="d-flex flex-column gap-2">
                         <div class="btn-group" role="group">
-                            <a class="btn btn-outline-primary" th:href="@{'/products/detail/' + ${product.id}}">查看詳情</a>
-                            <a class="btn btn-outline-secondary" th:href="@{'/products/edit/' + ${product.id}}"
+                            <a class="btn btn-outline-primary js-view-detail-btn" th:href="@{'/products/detail/' + ${product.id}}">查看詳情</a>
+                            <a class="btn btn-outline-secondary js-edit-btn" th:href="@{'/products/edit/' + ${product.id}}"
                                sec:authorize="hasRole('ADMIN')">編輯</a>
-                            <a class="btn btn-outline-danger" th:href="@{'/products/delete/' + ${product.id}}"
+                            <a class="btn btn-outline-danger js-delete-btn" th:href="@{'/products/delete/' + ${product.id}}"
                                sec:authorize="hasRole('ADMIN')"
                                onclick="return confirm('確定刪除這個商品嗎？');">刪除</a>
                         </div>
@@ -130,12 +127,27 @@
         var toastBody = document.getElementById('cartToastBody');
         var toast = toastElement ? new bootstrap.Toast(toastElement) : null;
 
+        // 阻止編輯、刪除按鈕和表單的事件冒泡，確保它們可以正常點擊
+        document.querySelectorAll('.js-edit-btn, .js-delete-btn, .js-add-cart-form').forEach(function (element) {
+            element.addEventListener('click', function (event) {
+                event.stopPropagation();
+            });
+        });
+
+        // 阻止加入購物車表單的輸入框事件冒泡
+        document.querySelectorAll('.js-add-cart-form input, .js-add-cart-form button').forEach(function (element) {
+            element.addEventListener('click', function (event) {
+                event.stopPropagation();
+            });
+        });
+
         document.querySelectorAll('.js-add-cart-form').forEach(function (form) {
             form.addEventListener('submit', function (event) {
                 if (!window.fetch) {
                     return;
                 }
                 event.preventDefault();
+                event.stopPropagation();
                 var formData = new FormData(form);
                 fetch(form.action, {
                     method: 'POST',
