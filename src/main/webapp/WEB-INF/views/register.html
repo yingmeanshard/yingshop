@@ -1,26 +1,32 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>註冊帳號</title>
+    <title th:text="#{auth.register.title}">註冊新帳號</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 </head>
 <body class="bg-light">
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
         <a class="navbar-brand" th:href="@{/}">YingShop</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" th:attr="aria-label=#{nav.toggle.menu}">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" th:href="@{/}">首頁</a></li>
-                <li class="nav-item"><a class="nav-link" th:href="@{/products}">商品列表</a></li>
-                <li class="nav-item" sec:authorize="isAnonymous()"><a class="nav-link" th:href="@{'/#authSection'}">我的訂單</a></li>
-                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/orders/mine}">我的訂單</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/}" th:text="#{nav.home}">首頁</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/products}" th:text="#{nav.products}">商品列表</a></li>
+                <li class="nav-item" sec:authorize="isAnonymous()"><a class="nav-link" th:href="@{'/#authSection'}" th:text="#{nav.orders}">我的訂單</a></li>
+                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/orders/mine}" th:text="#{nav.orders}">我的訂單</a></li>
             </ul>
             <div class="d-flex align-items-center gap-2">
-                <a class="btn btn-outline-light" th:href="@{'/#authSection'}">已有帳號？登入</a>
+                <!-- Language Switcher -->
+                <div class="me-2">
+                    <a class="text-white text-decoration-none lang-switch" href="#" data-lang="en">English</a>
+                    <span class="text-white mx-1">|</span>
+                    <a class="text-white text-decoration-none lang-switch" href="#" data-lang="zh_TW">繁體中文</a>
+                </div>
+                <a class="btn btn-outline-light" th:href="@{'/#authSection'}" th:text="#{auth.login}">已有帳號？登入</a>
             </div>
         </div>
     </div>
@@ -31,34 +37,34 @@
         <div class="col-lg-5">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white text-center">
-                    <h1 class="h4 mb-0">建立新帳號</h1>
+                    <h1 class="h4 mb-0" th:text="#{auth.register.title}">建立新帳號</h1>
                 </div>
                 <div class="card-body">
                     <div th:if="${registrationError}" class="alert alert-danger" th:text="${registrationError}"></div>
                     <form th:action="@{/register}" th:object="${registrationForm}" method="post" class="row g-3">
                         <div class="col-12">
-                            <label class="form-label" for="name">姓名</label>
+                            <label class="form-label" for="name" th:text="#{profile.name}">姓名</label>
                             <input type="text" class="form-control" id="name" th:field="*{name}" required>
                         </div>
                         <div class="col-12">
-                            <label class="form-label" for="email">Email</label>
+                            <label class="form-label" for="email" th:text="#{auth.account.email}">Email</label>
                             <input type="email" class="form-control" id="email" th:field="*{email}" required>
                         </div>
                         <div class="col-12">
-                            <label class="form-label" for="password">密碼</label>
+                            <label class="form-label" for="password" th:text="#{auth.password}">密碼</label>
                             <input type="password" class="form-control" id="password" th:field="*{password}" required>
                         </div>
                         <div class="col-12">
-                            <label class="form-label" for="confirmPassword">確認密碼</label>
+                            <label class="form-label" for="confirmPassword" th:text="#{auth.confirm.password}">確認密碼</label>
                             <input type="password" class="form-control" id="confirmPassword" th:field="*{confirmPassword}" required>
                         </div>
                         <div class="col-12">
-                            <button type="submit" class="btn btn-success w-100">註冊</button>
+                            <button type="submit" class="btn btn-success w-100" th:text="#{auth.register}">註冊</button>
                         </div>
                     </form>
                 </div>
                 <div class="card-footer text-center">
-                    <a class="btn btn-link" th:href="@{'/#authSection'}">返回登入頁</a>
+                    <a class="btn btn-link" th:href="@{'/#authSection'}" th:text="#{common.back}">返回登入頁</a>
                 </div>
             </div>
         </div>
@@ -66,5 +72,19 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        // 語言切換處理
+        document.querySelectorAll('.lang-switch').forEach(function (link) {
+            link.addEventListener('click', function (event) {
+                event.preventDefault();
+                var lang = this.getAttribute('data-lang');
+                var url = new URL(window.location.href);
+                url.searchParams.set('lang', lang);
+                window.location.href = url.toString();
+            });
+        });
+    });
+</script>
 </body>
 </html>

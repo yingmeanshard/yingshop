@@ -69,30 +69,31 @@
                 <table class="table table-striped mb-0">
                     <thead class="table-light">
                     <tr>
-                        <th scope="col" th:text="#{orders.order.number}">編號</th>
-                        <th scope="col" th:text="#{orders.user}">使用者</th>
-                        <th scope="col" th:text="#{orders.total.price}">總價</th>
-                        <th scope="col" th:text="#{orders.payment.method}">付款方式</th>
-                        <th scope="col" th:text="#{orders.status}">狀態</th>
-                        <th scope="col" th:text="#{orders.created.at}">建立時間</th>
-                        <th scope="col" th:text="#{common.view}">操作</th>
+                        <th scope="col" class="text-center" th:text="#{orders.order.number}">編號</th>
+                        <th scope="col" class="text-center" th:text="#{orders.user}">使用者</th>
+                        <th scope="col" class="text-end" th:text="#{orders.total.price}">總價</th>
+                        <th scope="col" class="text-center" th:text="#{orders.payment.method}">付款方式</th>
+                        <th scope="col" class="text-center" th:text="#{orders.status}">狀態</th>
+                        <th scope="col" class="text-center" th:text="#{orders.created.at}">建立時間</th>
+                        <th scope="col" class="text-center" th:text="#{common.view}">操作</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:each="order : ${orders}">
-                        <th scope="row">
+                        <th scope="row" class="text-center">
                             <a class="text-decoration-none" th:href="@{'/orders/' + ${order.id}}" th:text="${order.id}"></a>
                         </th>
-                        <td th:text="${order.user != null ? order.user.name : 'N/A'}"></td>
-                        <td><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span th:text="${#numbers.formatDecimal(order.totalPrice, 1, 'COMMA', 2, 'POINT')}"></span></td>
-                        <td th:text="${order.paymentMethod != null ? order.paymentMethod.displayName : (#messages.msg('common.not.set'))}"></td>
-                        <td>
+                        <td class="text-center" th:text="${order.user != null ? order.user.name : 'N/A'}"></td>
+                        <td class="text-end"><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span th:text="${#numbers.formatDecimal(order.totalPrice, 1, 'COMMA', 2, 'POINT')}"></span></td>
+                        <td class="text-center" th:with="paymentKey=${'payment.' + #strings.toLowerCase(#strings.replace(order.paymentMethod.name(), '_', '.'))}" th:text="${order.paymentMethod != null ? #messages.msg(paymentKey) : (#messages.msg('common.not.set'))}"></td>
+                        <td class="text-center">
                             <span class="badge rounded-pill"
                                   th:classappend="${order.status == T(com.example.demo.model.OrderStatus).SHIPPED ? ' bg-success' : order.status == T(com.example.demo.model.OrderStatus).PENDING_SHIPMENT ? ' bg-primary' : ' bg-warning text-dark'}"
-                                  th:text="${order.status != null ? order.status.displayName : (#messages.msg('common.not.set'))}"></span>
+                                  th:with="statusKey=${'order.status.' + #strings.toLowerCase(#strings.replace(order.status.name(), '_', '.'))}"
+                                  th:text="${order.status != null ? #messages.msg(statusKey) : (#messages.msg('common.not.set'))}"></span>
                         </td>
-                        <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm') : (#messages.msg('common.not.recorded'))}"></td>
-                        <td><a class="btn btn-sm btn-outline-primary" th:href="@{'/orders/' + ${order.id}}" th:text="#{common.view}">查看詳情</a></td>
+                        <td class="text-center" th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm') : (#messages.msg('common.not.recorded'))}"></td>
+                        <td class="text-center"><a class="btn btn-sm btn-outline-primary" th:href="@{'/orders/' + ${order.id}}" th:text="#{common.view}">查看詳情</a></td>
                     </tr>
                     </tbody>
                 </table>

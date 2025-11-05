@@ -88,4 +88,10 @@
     </filter-mapping>
     <!-- ================== Spring Security Filter（END） ================== -->
 
+    <!-- ================== Welcome File List ================== -->
+    <welcome-file-list>
+        <welcome-file>/</welcome-file>
+    </welcome-file-list>
+    <!-- ================== Welcome File List（END） ================== -->
+
 </web-app>

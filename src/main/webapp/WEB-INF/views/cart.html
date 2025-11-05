@@ -158,7 +158,8 @@
                                        th:value="${method.name()}"
                                        th:checked="${method.name() == 'CASH_ON_DELIVERY'}">
                                 <label class="form-check-label" th:for="${'pm-' + method.name()}"
-                                       th:text="${method.displayName}"></label>
+                                       th:with="paymentKey=${'payment.' + #strings.toLowerCase(#strings.replace(method.name(), '_', '.'))}"
+                                       th:text="#{__${paymentKey}__}"></label>
                             </div>
                         </div>
                         <div class="col-12">
