@@ -10,6 +10,7 @@ public class CartItem {
     private final BigDecimal unitPrice;
     private int quantity;
     private BigDecimal subtotal;
+    private boolean selected = true; // 預設選中
 
     public CartItem(Long productId, String name, BigDecimal unitPrice, int quantity) {
         if (productId == null) {
@@ -52,6 +53,14 @@ public class CartItem {
 
     private void recalculateSubtotal() {
         this.subtotal = unitPrice.multiply(BigDecimal.valueOf(this.quantity));
+    }
+
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
     }
 
     @Override

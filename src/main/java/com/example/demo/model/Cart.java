@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Cart {
 
@@ -44,6 +45,30 @@ public class Cart {
                 .map(CartItem::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
+    public BigDecimal getSelectedTotalPrice() {
+        return items.values().stream()
+                .filter(CartItem::isSelected)
+                .map(CartItem::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public Collection<CartItem> getSelectedItems() {
+        return items.values().stream()
+                .filter(CartItem::isSelected)
+                .collect(Collectors.toList());
+    }
+
+    public boolean hasSelectedItems() {
+        return items.values().stream().anyMatch(CartItem::isSelected);
+    }
+
+    public void setSelectedItems(java.util.Set<Long> selectedProductIds) {
+        items.values().forEach(item -> {
+            item.setSelected(selectedProductIds.contains(item.getProductId()));
+        });
+    }
+
     public Long getSelectedAddressId() {
         return selectedAddressId;
     }

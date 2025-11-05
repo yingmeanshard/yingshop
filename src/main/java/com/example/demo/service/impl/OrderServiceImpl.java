@@ -31,6 +31,9 @@ public class OrderServiceImpl implements OrderService {
         if (cart == null || cart.isEmpty()) {
             throw new IllegalArgumentException("Cart must contain at least one item to create an order");
         }
+        if (!cart.hasSelectedItems()) {
+            throw new IllegalArgumentException("Please select at least one item to checkout");
+        }
         if (user == null) {
             throw new IllegalArgumentException("User must not be null when creating an order");
         }
@@ -46,7 +49,7 @@ public class OrderServiceImpl implements OrderService {
 
         BigDecimal total = BigDecimal.ZERO;
         boolean hasOrderItems = false;
-        for (CartItem cartItem : cart.getItemList()) {
+        for (CartItem cartItem : cart.getSelectedItems()) {
             Product product = productDAO.findById(cartItem.getProductId());
             if (product == null) {
                 throw new IllegalArgumentException("Product not found for id: " + cartItem.getProductId());
@@ -65,7 +68,7 @@ public class OrderServiceImpl implements OrderService {
         order.setTotalPrice(total);
 
         if (!hasOrderItems) {
-            throw new IllegalArgumentException("Cart must contain items with quantity greater than zero");
+            throw new IllegalArgumentException("Cart must contain selected items with quantity greater than zero");
         }
 
         orderDAO.save(order);

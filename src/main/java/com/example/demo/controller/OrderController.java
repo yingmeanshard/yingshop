@@ -12,6 +12,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/orders")
@@ -117,6 +118,10 @@ public class OrderController {
             redirectAttributes.addFlashAttribute("errorMessage", "購物車為空，無法建立訂單。");
             return "redirect:/cart";
         }
+        if (!cart.hasSelectedItems()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "請至少選擇一個商品進行結帳。");
+            return "redirect:/cart";
+        }
         User user = userService.getUserById(userId);
         if (user == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "找不到指定的使用者。");
@@ -132,7 +137,14 @@ public class OrderController {
         }
         try {
             order = orderService.createOrder(cart, user, paymentMethod);
-            cart.clear();
+            // 只移除選中的商品，而不是清空整個購物車
+            List<Long> selectedProductIds = cart.getSelectedItems().stream()
+                    .map(CartItem::getProductId)
+                    .collect(Collectors.toList());
+            for (Long productId : selectedProductIds) {
+                cart.getItems().remove(productId);
+            }
+            cart.recalculateTotalPrice();
             redirectAttributes.addFlashAttribute("successMessage", "訂單建立成功。");
             return "redirect:/orders/" + order.getId();
         } catch (IllegalArgumentException ex) {

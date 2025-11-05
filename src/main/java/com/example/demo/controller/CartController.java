@@ -107,6 +107,25 @@ public class CartController {
         return "redirect:/cart";
     }
 
+    @PostMapping("/clear")
+    public String clearCart(@ModelAttribute("cart") Cart cart,
+                            RedirectAttributes redirectAttributes) {
+        cart.clear();
+        redirectAttributes.addFlashAttribute("successMessage", "購物車已清空。");
+        return "redirect:/cart";
+    }
+
+    @PostMapping("/update-selection")
+    public String updateSelection(@RequestParam(value = "selectedItems", required = false) java.util.List<Long> selectedProductIds,
+                                  @ModelAttribute("cart") Cart cart,
+                                  RedirectAttributes redirectAttributes) {
+        java.util.Set<Long> selectedIds = selectedProductIds != null ? 
+            new java.util.HashSet<>(selectedProductIds) : new java.util.HashSet<>();
+        cart.setSelectedItems(selectedIds);
+        redirectAttributes.addFlashAttribute("successMessage", "選中狀態已更新。");
+        return "redirect:/cart";
+    }
+
     @GetMapping
     public String showCart(@ModelAttribute("cart") Cart cart, Model model) {
         cartService.calculateTotalPrice(cart);

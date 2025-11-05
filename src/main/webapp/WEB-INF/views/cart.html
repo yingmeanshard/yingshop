@@ -75,44 +75,67 @@
 <div th:if="${!cart.empty}" class="row g-4">
         <div class="col-lg-8">
             <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h1 class="h4 mb-0" th:text="#{cart.details}">購物車明細</h1>
+                    <form th:action="@{/cart/clear}" method="post" class="m-0" id="clearCartForm">
+                        <button type="submit" class="btn btn-outline-light btn-sm" th:text="#{cart.clear}">清空購物車</button>
+                    </form>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-striped mb-0">
-                            <thead class="table-light">
-                            <tr>
-                                <th th:text="#{cart.item.name}">商品名稱</th>
-                                <th class="text-end" th:text="#{cart.unit.price}">單價</th>
-                                <th class="text-center" th:text="#{cart.quantity}">數量</th>
-                                <th class="text-end" th:text="#{cart.subtotal}">小計</th>
-                                <th class="text-center" th:text="#{common.view}">操作</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr th:each="item : ${items}">
-                                <td th:text="${item.name}">商品名稱</td>
-                                <td class="text-end"><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span th:text="${#numbers.formatDecimal(item.unitPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</span></td>
-                                <td class="text-center">
-                                    <form class="d-inline-flex align-items-center" th:action="@{'/cart/update/' + ${item.productId}}" method="post">
-                                        <input type="number" class="form-control form-control-sm me-2" name="quantity" min="0" th:value="${item.quantity}">
-                                        <button type="submit" class="btn btn-outline-secondary btn-sm" th:text="#{common.update}">更新</button>
-                                    </form>
-                                </td>
-                                <td class="text-end"><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span th:text="${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">$0.00</span></td>
-                                <td class="text-center">
-                                    <form th:action="@{'/cart/remove/' + ${item.productId}}" method="post">
-                                        <button type="submit" class="btn btn-outline-danger btn-sm" th:text="#{common.remove}">移除</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <form th:action="@{/cart/update-selection}" method="post" id="selectionForm">
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th class="text-center" style="width: 50px;">
+                                        <input type="checkbox" id="selectAll" title="全選/取消全選">
+                                    </th>
+                                    <th th:text="#{cart.item.name}">商品名稱</th>
+                                    <th class="text-end" th:text="#{cart.unit.price}">單價</th>
+                                    <th class="text-center" th:text="#{cart.quantity}">數量</th>
+                                    <th class="text-end" th:text="#{cart.subtotal}">小計</th>
+                                    <th class="text-center" th:text="#{common.view}">操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="item : ${items}">
+                                    <td class="text-center">
+                                        <input type="checkbox" 
+                                               class="form-check-input item-checkbox" 
+                                               name="selectedItems" 
+                                               th:value="${item.productId}"
+                                               th:checked="${item.selected}">
+                                    </td>
+                                    <td th:text="${item.name}">商品名稱</td>
+                                    <td class="text-end"><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span th:text="${#numbers.formatDecimal(item.unitPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</span></td>
+                                    <td class="text-center">
+                                        <form class="d-inline-flex align-items-center" th:action="@{'/cart/update/' + ${item.productId}}" method="post">
+                                            <input type="number" class="form-control form-control-sm me-2" name="quantity" min="0" th:value="${item.quantity}">
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm" th:text="#{common.update}">更新</button>
+                                        </form>
+                                    </td>
+                                    <td class="text-end"><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span class="item-subtotal" th:text="${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">$0.00</span></td>
+                                    <td class="text-center">
+                                        <form th:action="@{'/cart/remove/' + ${item.productId}}" method="post">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" th:text="#{common.remove}">移除</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer text-end">
+                            <button type="submit" class="btn btn-outline-primary btn-sm me-2" th:text="#{cart.update.selection}">更新選中狀態</button>
+                        </div>
+                    </form>
                 </div>
                 <div class="card-footer text-end fw-semibold">
-                    <span th:text="#{cart.total.amount}">總金額</span>：<span class="text-primary"><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span th:text="${#numbers.formatDecimal(cart.totalPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</span></span>
+                    <div class="mb-2">
+                        <span th:text="#{cart.total.amount}">總金額</span>：<span class="text-primary"><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span id="totalPrice" th:text="${#numbers.formatDecimal(cart.totalPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</span></span>
+                    </div>
+                    <div>
+                        <span th:text="#{cart.selected.total}">選中商品總額</span>：<span class="text-success"><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span id="selectedTotalPrice" th:text="${#numbers.formatDecimal(cart.selectedTotalPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</span></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -148,6 +171,7 @@
                 <div class="card-body">
                     <h3 class="h5" th:text="#{cart.create.order}">建立訂單</h3>
                     <p class="text-muted" th:text="#{cart.select.payment}">選擇付款方式後送出即可建立訂單。</p>
+                    <p class="text-warning small" th:if="${!cart.hasSelectedItems()}" th:text="#{cart.no.selected.items}">請至少選擇一個商品進行結帳。</p>
                     <form th:action="@{/orders}" method="post" class="row g-3">
                         <input type="hidden" name="userId" th:value="${currentUser != null ? currentUser.id : ''}" />
                         <div class="col-12">
@@ -163,7 +187,7 @@
                             </div>
                         </div>
                         <div class="col-12">
-                            <button type="submit" class="btn btn-success w-100" th:text="#{cart.confirm.create.order}">確認建立訂單</button>
+                            <button type="submit" class="btn btn-success w-100" id="createOrderBtn" th:text="#{cart.confirm.create.order}">確認建立訂單</button>
                         </div>
                     </form>
                 </div>
@@ -188,7 +212,88 @@
                 window.location.href = url.toString();
             });
         });
+
+        // 全選/取消全選功能
+        var selectAllCheckbox = document.getElementById('selectAll');
+        var itemCheckboxes = document.querySelectorAll('.item-checkbox');
+        
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                itemCheckboxes.forEach(function(checkbox) {
+                    checkbox.checked = selectAllCheckbox.checked;
+                });
+                updateSelectedTotal();
+                updateCreateOrderButtonState();
+            });
+        }
+
+        // 當單個checkbox改變時，更新全選狀態和選中總額
+        itemCheckboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                updateSelectAllState();
+                updateSelectedTotal();
+                updateCreateOrderButtonState();
+            });
+        });
+
+        // 初始化全選狀態
+        updateSelectAllState();
+        updateCreateOrderButtonState();
+
+        // 清空購物車確認
+        var clearCartForm = document.getElementById('clearCartForm');
+        if (clearCartForm) {
+            clearCartForm.addEventListener('submit', function(event) {
+                var confirmed = confirm(/*[[#{cart.clear.confirm}]]*/ '確定要清空購物車嗎？');
+                if (!confirmed) {
+                    event.preventDefault();
+                }
+            });
+        }
     });
+
+    function updateCreateOrderButtonState() {
+        var itemCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+        var createOrderBtn = document.getElementById('createOrderBtn');
+        if (createOrderBtn) {
+            if (itemCheckboxes.length === 0) {
+                createOrderBtn.disabled = true;
+                createOrderBtn.classList.add('disabled');
+            } else {
+                createOrderBtn.disabled = false;
+                createOrderBtn.classList.remove('disabled');
+            }
+        }
+    }
+
+    function updateSelectAllState() {
+        var selectAllCheckbox = document.getElementById('selectAll');
+        var itemCheckboxes = document.querySelectorAll('.item-checkbox');
+        if (selectAllCheckbox && itemCheckboxes.length > 0) {
+            var allChecked = Array.from(itemCheckboxes).every(function(cb) { return cb.checked; });
+            var someChecked = Array.from(itemCheckboxes).some(function(cb) { return cb.checked; });
+            selectAllCheckbox.checked = allChecked;
+            selectAllCheckbox.indeterminate = someChecked && !allChecked;
+        }
+    }
+
+    function updateSelectedTotal() {
+        var itemCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+        var total = 0;
+        itemCheckboxes.forEach(function(checkbox) {
+            var row = checkbox.closest('tr');
+            var subtotalText = row.querySelector('.item-subtotal').textContent.trim();
+            // 移除貨幣符號和逗號，轉換為數字
+            var value = parseFloat(subtotalText.replace(/[^0-9.]/g, '')) || 0;
+            total += value;
+        });
+        
+        var selectedTotalElement = document.getElementById('selectedTotalPrice');
+        if (selectedTotalElement) {
+            // 格式化數字（保留兩位小數）
+            selectedTotalElement.textContent = total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+    }
 </script>
 </body>
 </html>
