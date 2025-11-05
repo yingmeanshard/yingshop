@@ -1,28 +1,34 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>訂單列表</title>
+    <title th:text="#{orders.title}">訂單列表</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 </head>
 <body class="bg-light">
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container">
         <a class="navbar-brand" th:href="@{/}">YingShop</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" th:attr="aria-label=#{nav.toggle.menu}">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" th:href="@{/}">首頁</a></li>
-                <li class="nav-item"><a class="nav-link" th:href="@{/products}">商品列表</a></li>
-                <li class="nav-item"><a class="nav-link" th:href="@{/cart}">購物車</a></li>
-                <li class="nav-item" sec:authorize="hasRole('ADMIN')"><a class="nav-link active" th:href="@{/admin}">後台管理</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/}" th:text="#{nav.home}">首頁</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/products}" th:text="#{nav.products}">商品列表</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/cart}" th:text="#{nav.cart}">購物車</a></li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')"><a class="nav-link active" th:href="@{/admin}" th:text="#{nav.admin}">後台管理</a></li>
             </ul>
             <div class="d-flex align-items-center gap-2">
-                <span class="badge text-dark bg-warning" sec:authorize="hasRole('ADMIN')">管理者模式</span>
+                <!-- Language Switcher -->
+                <div class="me-2">
+                    <a class="text-white text-decoration-none lang-switch" href="#" data-lang="en">English</a>
+                    <span class="text-white mx-1">|</span>
+                    <a class="text-white text-decoration-none lang-switch" href="#" data-lang="zh_TW">繁體中文</a>
+                </div>
+                <span class="badge text-dark bg-warning" sec:authorize="hasRole('ADMIN')" th:text="#{nav.admin.mode}">管理者模式</span>
                 <form th:action="@{/logout}" method="post" class="m-0">
-                    <button class="btn btn-outline-light" type="submit">登出</button>
+                    <button class="btn btn-outline-light" type="submit" th:text="#{nav.logout}">登出</button>
                 </form>
             </div>
         </div>
@@ -34,13 +40,13 @@
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
     <div class="card mb-4" sec:authorize="hasRole('ADMIN')">
-        <div class="card-header">篩選訂單</div>
+        <div class="card-header" th:text="#{orders.filter}">篩選訂單</div>
         <div class="card-body">
             <form class="row g-3 align-items-end" method="get" th:action="@{/orders}">
                 <div class="col-md-6">
-                    <label class="form-label" for="user">使用者</label>
+                    <label class="form-label" for="user" th:text="#{orders.user}">使用者</label>
                     <select id="user" name="userId" class="form-select">
-                        <option value="" th:selected="${selectedUserId == null}">全部訂單</option>
+                        <option value="" th:selected="${selectedUserId == null}" th:text="#{orders.all.orders}">全部訂單</option>
                         <option th:each="user : ${users}"
                                 th:value="${user.id}"
                                 th:selected="${selectedUserId == user.id}"
@@ -48,14 +54,14 @@
                     </select>
                 </div>
                 <div class="col-md-6 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">篩選</button>
-                    <a th:href="@{/orders}" class="btn btn-outline-secondary">重設</a>
+                    <button type="submit" class="btn btn-primary" th:text="#{common.search}">篩選</button>
+                    <a th:href="@{/orders}" class="btn btn-outline-secondary" th:text="#{common.reset}">重設</a>
                 </div>
             </form>
         </div>
     </div>
 
-    <div th:if="${#lists.isEmpty(orders)}" class="alert alert-info">目前尚無訂單紀錄。</div>
+    <div th:if="${#lists.isEmpty(orders)}" class="alert alert-info" th:text="#{orders.no.orders}">目前尚無訂單紀錄。</div>
 
     <div th:if="${!#lists.isEmpty(orders)}" class="card">
         <div class="card-body p-0">
@@ -63,13 +69,13 @@
                 <table class="table table-striped mb-0">
                     <thead class="table-light">
                     <tr>
-                        <th scope="col">編號</th>
-                        <th scope="col">使用者</th>
-                        <th scope="col">總價</th>
-                        <th scope="col">付款方式</th>
-                        <th scope="col">狀態</th>
-                        <th scope="col">建立時間</th>
-                        <th scope="col">操作</th>
+                        <th scope="col" th:text="#{orders.order.number}">編號</th>
+                        <th scope="col" th:text="#{orders.user}">使用者</th>
+                        <th scope="col" th:text="#{orders.total.price}">總價</th>
+                        <th scope="col" th:text="#{orders.payment.method}">付款方式</th>
+                        <th scope="col" th:text="#{orders.status}">狀態</th>
+                        <th scope="col" th:text="#{orders.created.at}">建立時間</th>
+                        <th scope="col" th:text="#{common.view}">操作</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -79,14 +85,14 @@
                         </th>
                         <td th:text="${order.user != null ? order.user.name : 'N/A'}"></td>
                         <td><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span th:text="${#numbers.formatDecimal(order.totalPrice, 1, 'COMMA', 2, 'POINT')}"></span></td>
-                        <td th:text="${order.paymentMethod != null ? order.paymentMethod.displayName : '未設定'}"></td>
+                        <td th:text="${order.paymentMethod != null ? order.paymentMethod.displayName : (#messages.msg('common.not.set'))}"></td>
                         <td>
                             <span class="badge rounded-pill"
                                   th:classappend="${order.status == T(com.example.demo.model.OrderStatus).SHIPPED ? ' bg-success' : order.status == T(com.example.demo.model.OrderStatus).PENDING_SHIPMENT ? ' bg-primary' : ' bg-warning text-dark'}"
-                                  th:text="${order.status != null ? order.status.displayName : '未設定'}"></span>
+                                  th:text="${order.status != null ? order.status.displayName : (#messages.msg('common.not.set'))}"></span>
                         </td>
-                        <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm') : '未記錄'}"></td>
-                        <td><a class="btn btn-sm btn-outline-primary" th:href="@{'/orders/' + ${order.id}}">查看詳情</a></td>
+                        <td th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm') : (#messages.msg('common.not.recorded'))}"></td>
+                        <td><a class="btn btn-sm btn-outline-primary" th:href="@{'/orders/' + ${order.id}}" th:text="#{common.view}">查看詳情</a></td>
                     </tr>
                     </tbody>
                 </table>
@@ -96,5 +102,19 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        // 語言切換處理
+        document.querySelectorAll('.lang-switch').forEach(function (link) {
+            link.addEventListener('click', function (event) {
+                event.preventDefault();
+                var lang = this.getAttribute('data-lang');
+                var url = new URL(window.location.href);
+                url.searchParams.set('lang', lang);
+                window.location.href = url.toString();
+            });
+        });
+    });
+</script>
 </body>
 </html>

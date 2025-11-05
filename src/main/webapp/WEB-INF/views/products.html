@@ -1,59 +1,65 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>商品列表</title>
+    <title th:text="#{products.title}">商品列表</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 </head>
 <body class="bg-light">
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
         <a class="navbar-brand" th:href="@{/}">YingShop</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" th:attr="aria-label=#{nav.toggle.menu}">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" th:href="@{/}">首頁</a></li>
-                <li class="nav-item"><a class="nav-link active" th:href="@{/products}">商品列表</a></li>
-                <li class="nav-item"><a class="nav-link" th:href="@{/cart}">購物車</a></li>
-                <li class="nav-item" sec:authorize="isAnonymous()"><a class="nav-link" th:href="@{'/#authSection'}">我的訂單</a></li>
-                <li class="nav-item" sec:authorize="isAuthenticated() and !hasRole('ADMIN') and !hasRole('STAFF')"><a class="nav-link" th:href="@{/orders/mine}">我的訂單</a></li>
-                <li class="nav-item" sec:authorize="isAuthenticated() and !hasRole('ADMIN') and !hasRole('STAFF')"><a class="nav-link" th:href="@{/account/profile}">個人資料</a></li>
-                <li class="nav-item" sec:authorize="hasRole('ADMIN')"><a class="nav-link" th:href="@{/admin}">後台管理</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/}" th:text="#{nav.home}">首頁</a></li>
+                <li class="nav-item"><a class="nav-link active" th:href="@{/products}" th:text="#{nav.products}">商品列表</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/cart}" th:text="#{nav.cart}">購物車</a></li>
+                <li class="nav-item" sec:authorize="isAnonymous()"><a class="nav-link" th:href="@{'/#authSection'}" th:text="#{nav.orders}">我的訂單</a></li>
+                <li class="nav-item" sec:authorize="isAuthenticated() and !hasRole('ADMIN') and !hasRole('STAFF')"><a class="nav-link" th:href="@{/orders/mine}" th:text="#{nav.orders}">我的訂單</a></li>
+                <li class="nav-item" sec:authorize="isAuthenticated() and !hasRole('ADMIN') and !hasRole('STAFF')"><a class="nav-link" th:href="@{/account/profile}" th:text="#{nav.profile}">個人資料</a></li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')"><a class="nav-link" th:href="@{/admin}" th:text="#{nav.admin}">後台管理</a></li>
             </ul>
             <!-- 右上角：四個情境互斥顯示 -->
             <div class="d-flex align-items-center gap-2 ms-auto">
+                <!-- Language Switcher -->
+                <div class="me-2">
+                    <a class="text-white text-decoration-none lang-switch" href="#" data-lang="en">English</a>
+                    <span class="text-white mx-1">|</span>
+                    <a class="text-white text-decoration-none lang-switch" href="#" data-lang="zh_TW">繁體中文</a>
+                </div>
 
                 <!-- [1] 未登入 -->
                 <div class="d-flex align-items-center gap-2" sec:authorize="isAnonymous()">
-                    <a class="btn btn-outline-light" href="#authSection">登入</a>
-                    <a class="btn btn-outline-light" th:href="@{/register}">註冊</a>
-                    <button class="btn btn-outline-light disabled" type="button" disabled aria-disabled="true">登出</button>
+                    <a class="btn btn-outline-light" href="#authSection" th:text="#{nav.login}">登入</a>
+                    <a class="btn btn-outline-light" th:href="@{/register}" th:text="#{nav.register}">註冊</a>
+                    <button class="btn btn-outline-light disabled" type="button" disabled aria-disabled="true" th:text="#{nav.logout}">登出</button>
                 </div>
 
                 <!-- [2] 顧客登入（非 ADMIN） -->
                 <div class="d-flex align-items-center gap-2" sec:authorize="isAuthenticated() and !hasRole('ADMIN')">
-                    <a class="btn btn-outline-light disabled" href="#" tabindex="-1" role="button" aria-disabled="true">登入</a>
-                    <a class="btn btn-outline-light disabled" href="#" tabindex="-1" role="button" aria-disabled="true">註冊</a>
+                    <a class="btn btn-outline-light disabled" href="#" tabindex="-1" role="button" aria-disabled="true" th:text="#{nav.login}">登入</a>
+                    <a class="btn btn-outline-light disabled" href="#" tabindex="-1" role="button" aria-disabled="true" th:text="#{nav.register}">註冊</a>
                     <form th:action="@{/logout}" method="post" class="m-0">
-                        <button class="btn btn-outline-light" type="submit">登出</button>
+                        <button class="btn btn-outline-light" type="submit" th:text="#{nav.logout}">登出</button>
                     </form>
                 </div>
 
                 <!-- [3] 管理者登入 -->
                 <div class="d-flex align-items-center gap-2" sec:authorize="hasRole('ADMIN')">
-                    <span class="badge text-dark bg-warning">管理者模式</span>
+                    <span class="badge text-dark bg-warning" th:text="#{nav.admin.mode}">管理者模式</span>
                     <form th:action="@{/logout}" method="post" class="m-0">
-                        <button class="btn btn-outline-light" type="submit">登出</button>
+                        <button class="btn btn-outline-light" type="submit" th:text="#{nav.logout}">登出</button>
                     </form>
                 </div>
 
                 <!-- [4] 員工登入 -->
                 <div class="d-flex align-items-center gap-2" sec:authorize="hasRole('STAFF') and !hasRole('ADMIN')">
-                    <span class="badge text-dark bg-info">員工模式</span>
+                    <span class="badge text-dark bg-info" th:text="#{nav.staff.mode}">員工模式</span>
                     <form th:action="@{/logout}" method="post" class="m-0">
-                        <button class="btn btn-outline-light" type="submit">登出</button>
+                        <button class="btn btn-outline-light" type="submit" th:text="#{nav.logout}">登出</button>
                     </form>
                 </div>
 
@@ -64,21 +70,21 @@
 
 <main class="container py-4">
     <div class="d-flex justify-content-end mb-3" sec:authorize="hasRole('ADMIN')">
-        <a class="btn btn-outline-warning" th:href="@{/products/create}">新增商品</a>
+        <a class="btn btn-outline-warning" th:href="@{/products/create}" th:text="#{products.create}">新增商品</a>
     </div>
     <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
  <div class="card shadow-sm mb-4">
         <div class="card-body">
-            <h1 class="card-title h3 mb-3">商品一覽</h1>
+            <h1 class="card-title h3 mb-3" th:text="#{products.list}">商品一覽</h1>
             <form class="row g-3 align-items-center" th:action="@{/products}" method="get">
                 <div class="col-auto">
-                    <label for="category" class="col-form-label">分類：</label>
+                    <label for="category" class="col-form-label" th:text="#{products.category}">分類：</label>
                 </div>
                 <div class="col-sm-4">
                     <select class="form-select" id="category" name="category">
-                        <option value="" th:selected="${selectedCategory == null || #strings.isEmpty(selectedCategory)}">全部</option>
+                        <option value="" th:selected="${selectedCategory == null || #strings.isEmpty(selectedCategory)}" th:text="#{common.all}">全部</option>
                         <option th:each="category : ${categories}"
                                 th:value="${category}"
                                 th:selected="${category == selectedCategory}"
@@ -86,14 +92,14 @@
                     </select>
                 </div>
                 <div class="col-auto">
-                    <button type="submit" class="btn btn-primary">套用</button>
-                    <a class="btn btn-outline-secondary ms-2" th:href="@{/products}">清除</a>
+                    <button type="submit" class="btn btn-primary" th:text="#{common.apply}">套用</button>
+                    <a class="btn btn-outline-secondary ms-2" th:href="@{/products}" th:text="#{common.clear}">清除</a>
                 </div>
             </form>
         </div>
     </div>
 
-    <div th:if="${#lists.isEmpty(products)}" class="alert alert-info">目前沒有符合條件的商品。</div>
+    <div th:if="${#lists.isEmpty(products)}" class="alert alert-info" th:text="#{products.no.products}">目前沒有符合條件的商品。</div>
 
  <div class="row g-4" th:if="${!#lists.isEmpty(products)}">
         <div class="col-md-6 col-lg-4" th:each="product : ${products}">
@@ -103,7 +109,7 @@
                        class="d-flex align-items-center justify-content-center w-100 h-100">
                         <img th:if="${!#strings.isEmpty(product.imageUrl)}" th:src="${product.imageUrl}"
                              th:alt="${product.name}" class="object-fit-cover rounded-top w-100 h-100">
-                        <span th:if="${#strings.isEmpty(product.imageUrl)}" class="text-muted">暫無圖片</span>
+                        <span th:if="${#strings.isEmpty(product.imageUrl)}" class="text-muted" th:text="#{products.no.image}">暫無圖片</span>
                     </a>
                 </div>
            <div class="card-body d-flex flex-column">
@@ -114,19 +120,19 @@
                         <span th:text="${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}"></span>
                     </p>
                     <p class="mb-2">
-                        <small th:if="${product.stock == null || product.stock == 0}" class="text-danger fw-bold">庫存不足</small>
-                        <small th:if="${product.stock != null && product.stock > 0 && product.stock < 5}" class="text-warning fw-bold">庫存緊張</small>
-                        <small th:if="${product.stock != null && product.stock >= 5}" class="text-success fw-bold">庫存充沛</small>
+                        <small th:if="${product.stock == null || product.stock == 0}" class="text-danger fw-bold" th:text="#{stock.out.of.stock}">庫存不足</small>
+                        <small th:if="${product.stock != null && product.stock > 0 && product.stock < 5}" class="text-warning fw-bold" th:text="#{stock.low.stock}">庫存緊張</small>
+                        <small th:if="${product.stock != null && product.stock >= 5}" class="text-success fw-bold" th:text="#{stock.in.stock}">庫存充沛</small>
                     </p>
-                    <p class="flex-grow-1" th:text="${#strings.isEmpty(product.description) ? '此商品尚無描述。' : #strings.abbreviate(product.description, 80)}"></p>
+                    <p class="flex-grow-1" th:text="${#strings.isEmpty(product.description) ? (#messages.msg('products.no.description')) : #strings.abbreviate(product.description, 80)}"></p>
                     <div class="d-flex flex-column gap-2">
                         <div class="btn-group" role="group">
-                            <a class="btn btn-outline-primary js-view-detail-btn" th:href="@{'/products/detail/' + ${product.id}}">查看詳情</a>
+                            <a class="btn btn-outline-primary js-view-detail-btn" th:href="@{'/products/detail/' + ${product.id}}" th:text="#{products.view.details}">查看詳情</a>
                             <a class="btn btn-outline-secondary js-edit-btn" th:href="@{'/products/edit/' + ${product.id}}"
-                               sec:authorize="hasRole('ADMIN')">編輯</a>
+                               sec:authorize="hasRole('ADMIN')" th:text="#{common.edit}">編輯</a>
                             <a class="btn btn-outline-danger js-delete-btn" th:href="@{'/products/delete/' + ${product.id}}"
                                sec:authorize="hasRole('ADMIN')"
-                               onclick="return confirm('確定刪除這個商品嗎？');">刪除</a>
+                               th:onclick="'return confirm(\'' + #{products.delete.confirm} + '\');'" th:text="#{common.delete}">刪除</a>
                         </div>
                         <form class="d-flex align-items-center gap-2 js-add-cart-form"
                               method="post"
@@ -135,7 +141,7 @@
                             <input type="number" class="form-control" name="quantity" min="1" value="1">
                             <input type="hidden" name="redirect"
                                    th:value="${#httpServletRequest.requestURI + (#strings.isEmpty(#httpServletRequest.queryString) ? '' : '?' + #httpServletRequest.queryString)}" />
-                            <button type="submit" class="btn btn-success flex-grow-1">加入購物車</button>
+                            <button type="submit" class="btn btn-success flex-grow-1" th:text="#{products.add.to.cart}">加入購物車</button>
                         </form>
                     </div>
                 </div>
@@ -147,7 +153,7 @@
 <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080;">
     <div id="cartToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
-            <div class="toast-body" id="cartToastBody">
+            <div class="toast-body" id="cartToastBody" th:text="#{message.product.added}">
                 商品已加入購物車。
             </div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
@@ -161,6 +167,17 @@
         var toastElement = document.getElementById('cartToast');
         var toastBody = document.getElementById('cartToastBody');
         var toast = toastElement ? new bootstrap.Toast(toastElement) : null;
+
+        // 語言切換處理
+        document.querySelectorAll('.lang-switch').forEach(function (link) {
+            link.addEventListener('click', function (event) {
+                event.preventDefault();
+                var lang = this.getAttribute('data-lang');
+                var url = new URL(window.location.href);
+                url.searchParams.set('lang', lang);
+                window.location.href = url.toString();
+            });
+        });
 
         // 阻止編輯、刪除按鈕和表單的事件冒泡，確保它們可以正常點擊
         document.querySelectorAll('.js-edit-btn, .js-delete-btn, .js-add-cart-form').forEach(function (element) {
@@ -212,10 +229,10 @@
                     if (toast) {
                         toastElement.classList.remove('text-bg-success');
                         toastElement.classList.add('text-bg-danger');
-                        toastBody.textContent = error.message || 'form.getAttribute('data-product-name') + ' 已加入購物車。';
+                        toastBody.textContent = error.message || (form.getAttribute('data-product-name') + ' 已加入購物車。');
                         toast.show();
                     } else {
-                        alert(error.message || 'form.getAttribute('data-product-name') + ' 已加入購物車。');
+                        alert(error.message || (form.getAttribute('data-product-name') + ' 已加入購物車。'));
                     }
                 });
             });

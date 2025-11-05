@@ -1,0 +1,7 @@
+<!-- Language Switcher Fragment -->
+<div class="d-inline-flex align-items-center gap-2">
+    <a class="text-decoration-none" th:href="@{(${#httpServletRequest.requestURI} + '?' + ${#strings.isEmpty(#httpServletRequest.queryString) ? '' : #httpServletRequest.queryString + '&'} + 'lang=en')}">English</a>
+    <span class="text-muted">|</span>
+    <a class="text-decoration-none" th:href="@{(${#httpServletRequest.requestURI} + '?' + ${#strings.isEmpty(#httpServletRequest.queryString) ? '' : #httpServletRequest.queryString + '&'} + 'lang=zh_TW')}">繁體中文</a>
+</div>
+
