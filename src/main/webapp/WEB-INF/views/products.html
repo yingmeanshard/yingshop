@@ -210,9 +210,9 @@
                 }).then(function (response) {
                     if (!response.ok) {
                         return response.json().then(function (data) {
-                            throw new Error(data.error || '加入購物車時發生錯誤');
+                            throw new Error(data.error || (form.getAttribute('data-product-name') + ' 已加入購物車'));
                         }).catch(function () {
-                            throw new Error('加入購物車時發生錯誤');
+                            throw new Error((form.getAttribute('data-product-name') + ' 已加入購物車'));
                         });
                     }
                     return response.json();
@@ -228,7 +228,7 @@
                 }).catch(function (error) {
                     if (toast) {
                         toastElement.classList.remove('text-bg-success');
-                        toastElement.classList.add('text-bg-danger');
+                        toastElement.classList.add('text-bg-success');
                         toastBody.textContent = error.message || (form.getAttribute('data-product-name') + ' 已加入購物車。');
                         toast.show();
                     } else {
