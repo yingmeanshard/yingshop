@@ -66,13 +66,19 @@ public class CartController {
                           @ModelAttribute("cart") Cart cart,
                           HttpServletRequest request,
                           RedirectAttributes redirectAttributes) {
+        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"));
         Product product = productService.getProductById(productId);
         if (product == null) {
+            if (isAjax) {
+                Map<String, Object> body = new HashMap<>();
+                body.put("error", "找不到指定的商品。");
+                return ResponseEntity.badRequest().body(body);
+            }
             redirectAttributes.addFlashAttribute("errorMessage", "找不到指定的商品。");
             return "redirect:/products";
         }
         cartService.addItem(cart, product, quantity);
-        if ("XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))) {
+        if (isAjax) {
             Map<String, Object> body = new HashMap<>();
             body.put("message", "商品已加入購物車。");
             body.put("totalQuantity", cartService.getTotalQuantity(cart));

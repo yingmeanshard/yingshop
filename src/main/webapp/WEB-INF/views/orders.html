@@ -78,7 +78,7 @@
                             <a class="text-decoration-none" th:href="@{'/orders/' + ${order.id}}" th:text="${order.id}"></a>
                         </th>
                         <td th:text="${order.user != null ? order.user.name : 'N/A'}"></td>
-                        <td th:text="${#numbers.formatDecimal(order.totalPrice, 1, 'COMMA', 2, 'POINT')}"></td>
+                        <td><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span th:text="${#numbers.formatDecimal(order.totalPrice, 1, 'COMMA', 2, 'POINT')}"></span></td>
                         <td th:text="${order.paymentMethod != null ? order.paymentMethod.displayName : '未設定'}"></td>
                         <td>
                             <span class="badge rounded-pill"

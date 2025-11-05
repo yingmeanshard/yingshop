@@ -110,8 +110,8 @@
                     <h5 class="card-title mb-2" th:text="${product.name}"></h5>
                     <p class="text-muted mb-1" th:text="${product.category}"></p>
                     <p class="fw-semibold text-primary mb-1">
+                        <span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span>
                         <span th:text="${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}"></span>
-                        <span th:text="${#locale.language == 'zh' ? ' NTD' : ' USD'}"></span>
                     </p>
                     <p class="mb-2">
                         <small th:if="${product.stock == null || product.stock == 0}" class="text-danger fw-bold">庫存不足</small>
@@ -192,7 +192,11 @@
                     body: formData
                 }).then(function (response) {
                     if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                        return response.json().then(function (data) {
+                            throw new Error(data.error || '加入購物車時發生錯誤');
+                        }).catch(function () {
+                            throw new Error('加入購物車時發生錯誤');
+                        });
                     }
                     return response.json();
                 }).then(function (data) {
@@ -204,14 +208,14 @@
                     } else {
                         alert(data.message || (form.getAttribute('data-product-name') + ' 已加入購物車'));
                     }
-                }).catch(function () {
+                }).catch(function (error) {
                     if (toast) {
                         toastElement.classList.remove('text-bg-success');
                         toastElement.classList.add('text-bg-danger');
-                        toastBody.textContent = '加入購物車時發生問題，請稍後再試。';
+                        toastBody.textContent = error.message || 'form.getAttribute('data-product-name') + ' 已加入購物車。';
                         toast.show();
                     } else {
-                        alert('加入購物車時發生問題，請稍後再試。');
+                        alert(error.message || 'form.getAttribute('data-product-name') + ' 已加入購物車。');
                     }
                 });
             });

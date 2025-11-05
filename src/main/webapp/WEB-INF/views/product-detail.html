@@ -80,7 +80,7 @@
                     </div>
                 </div>
                 <p class="text-muted mb-2"><strong>分類：</strong><span th:text="${product.category}"></span></p>
-                <p class="text-primary fw-bold mb-3"><strong>價格：</strong><span th:text="${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}"></span></p>
+                <p class="text-primary fw-bold mb-3"><strong>價格：</strong><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span th:text="${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}"></span></p>
                 <div class="mb-4">
                     <h2 class="h5">描述</h2>
                     <p class="mb-0" th:text="${product.description}">此商品尚無描述。</p>

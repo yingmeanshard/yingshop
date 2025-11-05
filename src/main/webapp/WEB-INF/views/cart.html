@@ -86,14 +86,14 @@
                             <tbody>
                             <tr th:each="item : ${items}">
                                 <td th:text="${item.name}">商品名稱</td>
-                                <td class="text-end" th:text="${#numbers.formatDecimal(item.unitPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                                <td class="text-end"><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span th:text="${#numbers.formatDecimal(item.unitPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</span></td>
                                 <td class="text-center">
                                     <form class="d-inline-flex align-items-center" th:action="@{'/cart/update/' + ${item.productId}}" method="post">
                                         <input type="number" class="form-control form-control-sm me-2" name="quantity" min="0" th:value="${item.quantity}">
                                         <button type="submit" class="btn btn-outline-secondary btn-sm">更新</button>
                                     </form>
                                 </td>
-                                <td class="text-end" th:text="${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                                <td class="text-end"><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span th:text="${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">$0.00</span></td>
                                 <td class="text-center">
                                     <form th:action="@{'/cart/remove/' + ${item.productId}}" method="post">
                                         <button type="submit" class="btn btn-outline-danger btn-sm">移除</button>
@@ -105,7 +105,7 @@
                     </div>
                 </div>
                 <div class="card-footer text-end fw-semibold">
-                    總金額：<span class="text-primary" th:text="${#numbers.formatDecimal(cart.totalPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                    總金額：<span class="text-primary"><span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span><span th:text="${#numbers.formatDecimal(cart.totalPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</span></span>
                 </div>
             </div>
         </div>
