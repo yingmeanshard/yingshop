@@ -192,6 +192,10 @@
             // 根據配送付款方式設置地址
             if (method === 'CASH_ON_DELIVERY') {
                 // 貨到付款 -> 地址可編輯，必填
+                // 如果當前地址是"自取"，則清空
+                if (addressTextarea.value === pickupText || addressTextarea.value.trim() === '自取') {
+                    addressTextarea.value = '';
+                }
                 addressTextarea.readOnly = false;
                 addressTextarea.required = true;
             } else if (method === 'PICKUP_CASH') {

@@ -117,12 +117,16 @@ public class CartController {
 
     @PostMapping("/update-selection")
     public String updateSelection(@RequestParam(value = "selectedItems", required = false) java.util.List<Long> selectedProductIds,
+                                  @RequestParam(value = "autoUpdate", required = false) String autoUpdate,
                                   @ModelAttribute("cart") Cart cart,
                                   RedirectAttributes redirectAttributes) {
         java.util.Set<Long> selectedIds = selectedProductIds != null ? 
             new java.util.HashSet<>(selectedProductIds) : new java.util.HashSet<>();
         cart.setSelectedItems(selectedIds);
-        redirectAttributes.addFlashAttribute("successMessage", "選中狀態已更新。");
+        // 只在手動點擊按鈕時顯示成功消息
+        if (autoUpdate == null || !autoUpdate.equals("true")) {
+            redirectAttributes.addFlashAttribute("successMessage", "選中狀態已更新。");
+        }
         return "redirect:/cart";
     }
 

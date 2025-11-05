@@ -5,6 +5,8 @@ import com.example.demo.service.OrderService;
 import com.example.demo.service.ProductService;
 import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,12 +27,14 @@ public class CheckoutController {
     private final OrderService orderService;
     private final UserService userService;
     private final ProductService productService;
+    private final MessageSource messageSource;
 
     @Autowired
-    public CheckoutController(OrderService orderService, UserService userService, ProductService productService) {
+    public CheckoutController(OrderService orderService, UserService userService, ProductService productService, MessageSource messageSource) {
         this.orderService = orderService;
         this.userService = userService;
         this.productService = productService;
+        this.messageSource = messageSource;
     }
 
     @GetMapping
@@ -100,6 +104,15 @@ public class CheckoutController {
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "請選擇有效的配送付款方式。");
             return "redirect:/checkout";
+        }
+
+        // 驗證：如果選擇貨到付款，地址不能是"自取"
+        if (deliveryPaymentMethod == DeliveryPaymentMethod.CASH_ON_DELIVERY) {
+            if (recipientAddress != null && (recipientAddress.trim().equals("自取") || recipientAddress.trim().equalsIgnoreCase("pickup"))) {
+                String errorMsg = messageSource.getMessage("checkout.error.address.pickup.not.allowed", null, LocaleContextHolder.getLocale());
+                redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
+                return "redirect:/checkout";
+            }
         }
 
         try {
