@@ -1,12 +1,12 @@
 package com.example.demo.model;
 
-public enum PaymentMethod {
+public enum DeliveryPaymentMethod {
     CASH_ON_DELIVERY("貨到付款"),
-    PICKUP("付現");
+    PICKUP_CASH("自取付現");
 
     private final String displayName;
 
-    PaymentMethod(String displayName) {
+    DeliveryPaymentMethod(String displayName) {
         this.displayName = displayName;
     }
 
@@ -14,3 +14,4 @@ public enum PaymentMethod {
         return displayName;
     }
 }
+

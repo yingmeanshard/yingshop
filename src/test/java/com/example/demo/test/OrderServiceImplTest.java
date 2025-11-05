@@ -3,6 +3,7 @@ package com.example.demo.test;
 import com.example.demo.dao.OrderDAO;
 import com.example.demo.dao.ProductDAO;
 import com.example.demo.model.*;
+import com.example.demo.service.AddressService;
 import com.example.demo.service.impl.OrderServiceImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,12 +22,14 @@ public class OrderServiceImplTest {
     private OrderDAO orderDAO;
     @Mock
     private ProductDAO productDAO;
+    @Mock
+    private AddressService addressService;
 
     private OrderServiceImpl orderService;
 
     @Before
     public void setUp() {
-        orderService = new OrderServiceImpl(orderDAO, productDAO);
+        orderService = new OrderServiceImpl(orderDAO, productDAO, addressService);
     }
 
     @Test

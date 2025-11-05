@@ -3,6 +3,7 @@ package com.example.demo.service.impl;
 import com.example.demo.dao.OrderDAO;
 import com.example.demo.dao.ProductDAO;
 import com.example.demo.model.*;
+import com.example.demo.service.AddressService;
 import com.example.demo.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,11 +20,13 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderDAO orderDAO;
     private final ProductDAO productDAO;
+    private final AddressService addressService;
 
     @Autowired
-    public OrderServiceImpl(OrderDAO orderDAO, ProductDAO productDAO) {
+    public OrderServiceImpl(OrderDAO orderDAO, ProductDAO productDAO, AddressService addressService) {
         this.orderDAO = orderDAO;
         this.productDAO = productDAO;
+        this.addressService = addressService;
     }
 
     @Override
@@ -45,6 +48,150 @@ public class OrderServiceImpl implements OrderService {
         order.setUser(user);
         order.setStatus(OrderStatus.PENDING_PAYMENT);
         order.setPaymentMethod(paymentMethod);
+        order.setCreatedAt(LocalDateTime.now());
+
+        // 保存收件地址信息
+        Long selectedAddressId = cart.getSelectedAddressId();
+        if (selectedAddressId != null) {
+            Address address = addressService.getById(selectedAddressId);
+            if (address != null && address.getUser() != null && address.getUser().getId().equals(user.getId())) {
+                order.setRecipientName(address.getRecipientName());
+                order.setRecipientPhone(address.getPhoneNumber());
+                // 組合完整地址
+                StringBuilder fullAddress = new StringBuilder();
+                fullAddress.append(address.getAddressLine1());
+                if (address.getAddressLine2() != null && !address.getAddressLine2().trim().isEmpty()) {
+                    fullAddress.append(", ").append(address.getAddressLine2());
+                }
+                fullAddress.append(", ").append(address.getCity());
+                fullAddress.append(", ").append(address.getState());
+                fullAddress.append(" ").append(address.getPostalCode());
+                order.setRecipientAddress(fullAddress.toString());
+            }
+        }
+
+        BigDecimal total = BigDecimal.ZERO;
+        boolean hasOrderItems = false;
+        for (CartItem cartItem : cart.getSelectedItems()) {
+            Product product = productDAO.findById(cartItem.getProductId());
+            if (product == null) {
+                throw new IllegalArgumentException("Product not found for id: " + cartItem.getProductId());
+            }
+            if (cartItem.getQuantity() <= 0) {
+                continue;
+            }
+            OrderItem orderItem = new OrderItem();
+            orderItem.setProduct(product);
+            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setUnitPrice(cartItem.getUnitPrice());
+            order.addItem(orderItem);
+            total = total.add(orderItem.getSubtotal());
+            hasOrderItems = true;
+        }
+        order.setTotalPrice(total);
+
+        if (!hasOrderItems) {
+            throw new IllegalArgumentException("Cart must contain selected items with quantity greater than zero");
+        }
+
+        orderDAO.save(order);
+
+        return order;
+    }
+
+    @Override
+    public Order createOrder(Cart cart, User user, PaymentMethod paymentMethod, DeliveryMethod deliveryMethod,
+                             String recipientName, String recipientPhone, String recipientEmail, String recipientAddress) {
+        if (cart == null || cart.isEmpty()) {
+            throw new IllegalArgumentException("Cart must contain at least one item to create an order");
+        }
+        if (!cart.hasSelectedItems()) {
+            throw new IllegalArgumentException("Please select at least one item to checkout");
+        }
+        if (user == null) {
+            throw new IllegalArgumentException("User must not be null when creating an order");
+        }
+        if (paymentMethod == null) {
+            throw new IllegalArgumentException("Payment method must be provided");
+        }
+        if (deliveryMethod == null) {
+            throw new IllegalArgumentException("Delivery method must be provided");
+        }
+
+        Order order = new Order();
+        order.setUser(user);
+        order.setStatus(OrderStatus.PENDING_PAYMENT);
+        order.setPaymentMethod(paymentMethod);
+        order.setDeliveryMethod(deliveryMethod);
+        order.setRecipientName(recipientName);
+        order.setRecipientPhone(recipientPhone);
+        order.setRecipientEmail(recipientEmail);
+        order.setRecipientAddress(recipientAddress);
+        order.setCreatedAt(LocalDateTime.now());
+
+        BigDecimal total = BigDecimal.ZERO;
+        boolean hasOrderItems = false;
+        for (CartItem cartItem : cart.getSelectedItems()) {
+            Product product = productDAO.findById(cartItem.getProductId());
+            if (product == null) {
+                throw new IllegalArgumentException("Product not found for id: " + cartItem.getProductId());
+            }
+            if (cartItem.getQuantity() <= 0) {
+                continue;
+            }
+            OrderItem orderItem = new OrderItem();
+            orderItem.setProduct(product);
+            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setUnitPrice(cartItem.getUnitPrice());
+            order.addItem(orderItem);
+            total = total.add(orderItem.getSubtotal());
+            hasOrderItems = true;
+        }
+        order.setTotalPrice(total);
+
+        if (!hasOrderItems) {
+            throw new IllegalArgumentException("Cart must contain selected items with quantity greater than zero");
+        }
+
+        orderDAO.save(order);
+
+        return order;
+    }
+
+    @Override
+    public Order createOrder(Cart cart, User user, DeliveryPaymentMethod deliveryPaymentMethod,
+                             String recipientName, String recipientPhone, String recipientEmail, String recipientAddress) {
+        if (cart == null || cart.isEmpty()) {
+            throw new IllegalArgumentException("Cart must contain at least one item to create an order");
+        }
+        if (!cart.hasSelectedItems()) {
+            throw new IllegalArgumentException("Please select at least one item to checkout");
+        }
+        if (user == null) {
+            throw new IllegalArgumentException("User must not be null when creating an order");
+        }
+        if (deliveryPaymentMethod == null) {
+            throw new IllegalArgumentException("Delivery payment method must be provided");
+        }
+
+        Order order = new Order();
+        order.setUser(user);
+        order.setStatus(OrderStatus.PENDING_PAYMENT);
+        order.setDeliveryPaymentMethod(deliveryPaymentMethod);
+        
+        // 根據配送付款方式設置對應的paymentMethod和deliveryMethod（用於兼容舊代碼）
+        if (deliveryPaymentMethod == DeliveryPaymentMethod.CASH_ON_DELIVERY) {
+            order.setPaymentMethod(PaymentMethod.CASH_ON_DELIVERY);
+            order.setDeliveryMethod(DeliveryMethod.CASH_ON_DELIVERY);
+        } else if (deliveryPaymentMethod == DeliveryPaymentMethod.PICKUP_CASH) {
+            order.setPaymentMethod(PaymentMethod.PICKUP);
+            order.setDeliveryMethod(DeliveryMethod.PICKUP);
+        }
+        
+        order.setRecipientName(recipientName);
+        order.setRecipientPhone(recipientPhone);
+        order.setRecipientEmail(recipientEmail);
+        order.setRecipientAddress(recipientAddress);
         order.setCreatedAt(LocalDateTime.now());
 
         BigDecimal total = BigDecimal.ZERO;
@@ -141,8 +288,9 @@ public class OrderServiceImpl implements OrderService {
                 return nextStatus == OrderStatus.PROCESSING
                         || nextStatus == OrderStatus.PENDING_SHIPMENT;
             case PROCESSING:
-                // 待處理後可進入待出貨
-                return nextStatus == OrderStatus.PENDING_SHIPMENT;
+                // 待處理後可進入待出貨或已出貨
+                return nextStatus == OrderStatus.PENDING_SHIPMENT
+                        || nextStatus == OrderStatus.SHIPPED;
             case PENDING_SHIPMENT:
                 // 待出貨後可進入已出貨
                 return nextStatus == OrderStatus.SHIPPED;

@@ -105,6 +105,24 @@
                 <div class="text-muted" th:text="#{orders.created.at}">建立時間</div>
                 <div th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm') : (#messages.msg('common.not.recorded'))}"></div>
             </div>
+            <div class="col-12" th:if="${order.recipientName != null || order.recipientPhone != null || order.recipientAddress != null}">
+                <hr>
+                <h6 class="mb-3" th:text="#{orders.recipient.info}">收件資訊</h6>
+                <div class="row g-3">
+                    <div class="col-sm-6 col-lg-4" th:if="${order.recipientName != null}">
+                        <div class="text-muted" th:text="#{orders.recipient.name}">收件人姓名</div>
+                        <div th:text="${order.recipientName}"></div>
+                    </div>
+                    <div class="col-sm-6 col-lg-4" th:if="${order.recipientPhone != null}">
+                        <div class="text-muted" th:text="#{orders.recipient.phone}">收件人電話</div>
+                        <div th:text="${order.recipientPhone}"></div>
+                    </div>
+                    <div class="col-12" th:if="${order.recipientAddress != null}">
+                        <div class="text-muted" th:text="#{orders.recipient.address}">收件地址</div>
+                        <div th:text="${order.recipientAddress}"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

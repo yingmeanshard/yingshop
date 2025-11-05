@@ -140,56 +140,20 @@
             </div>
         </div>
         <div class="col-lg-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-secondary text-white">
-                    <h2 class="h5 mb-0" th:text="#{cart.delivery.info}">收貨資訊</h2>
-                </div>
+            <div class="card shadow-sm" th:if="${!cart.empty}" sec:authorize="isAuthenticated()">
                 <div class="card-body">
-                    <div th:if="${#lists.isEmpty(addresses)}">
-                        <p class="text-muted" th:text="#{cart.no.address}">尚未建立收貨地址，請先新增。</p>
-                        <a class="btn btn-outline-primary" th:href="@{/addresses/new}" th:text="#{cart.add.address}">新增地址</a>
-                    </div>
-                    <div th:if="${!#lists.isEmpty(addresses)}">
-                        <form th:action="@{/cart/select-address}" method="post" class="mb-3">
-                            <label for="addressId" class="form-label" th:text="#{cart.select.address}">選擇收貨地址</label>
-                            <select id="addressId" name="addressId" class="form-select" required>
-                                <option th:each="address : ${addresses}"
-                                        th:value="${address.id}"
-                                        th:selected="${cart.selectedAddressId} == address.id or (cart.selectedAddressId == null and defaultAddressId == address.id)"
-                                        th:text="${address.recipientName + ' - ' + address.addressLine1 + ' ' + address.city}"></option>
-                            </select>
-                            <button type="submit" class="btn btn-primary w-100 mt-3" th:text="#{common.apply}">使用此地址</button>
-                        </form>
-                        <div class="alert alert-info" th:if="${defaultAddressId != null}">
-                            <span th:text="#{profile.default.address.id}">預設地址 ID</span>：<span th:text="${defaultAddressId}"></span>
-                        </div>
-                        <a class="btn btn-outline-secondary w-100" th:href="@{/addresses}" th:text="#{cart.manage.address}">管理地址</a>
-                    </div>
-                </div>
-            </div>
-            <div class="card shadow-sm mt-3" th:if="${!cart.empty}" sec:authorize="isAuthenticated()">
-                <div class="card-body">
-                    <h3 class="h5" th:text="#{cart.create.order}">建立訂單</h3>
-                    <p class="text-muted" th:text="#{cart.select.payment}">選擇付款方式後送出即可建立訂單。</p>
-                    <p class="text-warning small" th:if="${!cart.hasSelectedItems()}" th:text="#{cart.no.selected.items}">請至少選擇一個商品進行結帳。</p>
-                    <form th:action="@{/orders}" method="post" class="row g-3">
-                        <input type="hidden" name="userId" th:value="${currentUser != null ? currentUser.id : ''}" />
-                        <div class="col-12">
-                            <label class="form-label" th:text="#{cart.payment.method}">付款方式</label>
-                            <div th:each="method : ${paymentMethods}" class="form-check">
-                                <input class="form-check-input" type="radio" name="paymentMethod"
-                                       th:id="${'pm-' + method.name()}"
-                                       th:value="${method.name()}"
-                                       th:checked="${method.name() == 'CASH_ON_DELIVERY'}">
-                                <label class="form-check-label" th:for="${'pm-' + method.name()}"
-                                       th:with="paymentKey=${'payment.' + #strings.toLowerCase(#strings.replace(method.name(), '_', '.'))}"
-                                       th:text="#{__${paymentKey}__}"></label>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-success w-100" id="createOrderBtn" th:text="#{cart.confirm.create.order}">確認建立訂單</button>
-                        </div>
-                    </form>
+                    <h3 class="h5 mb-3" th:text="#{cart.checkout}">結帳</h3>
+                    <p class="text-muted" th:text="#{cart.selected.total}">選中商品總額</p>
+                    <h4 class="text-primary mb-3">
+                        <span th:text="${#locale.language == 'zh' ? 'NTD ' : 'USD '}"></span>
+                        <span th:text="${#numbers.formatDecimal(cart.selectedTotalPrice, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                    </h4>
+                    <p class="text-warning small mb-3" th:if="${!cart.hasSelectedItems()}" th:text="#{cart.no.selected.items}">請至少選擇一個商品進行結帳。</p>
+                    <a th:href="@{/checkout}" 
+                       class="btn btn-primary w-100" 
+                       id="checkoutBtn"
+                       th:disabled="${!cart.hasSelectedItems()}"
+                       th:text="#{cart.next.step}">下一步</a>
                 </div>
             </div>
         </div>
@@ -254,14 +218,16 @@
 
     function updateCreateOrderButtonState() {
         var itemCheckboxes = document.querySelectorAll('.item-checkbox:checked');
-        var createOrderBtn = document.getElementById('createOrderBtn');
-        if (createOrderBtn) {
+        var checkoutBtn = document.getElementById('checkoutBtn');
+        if (checkoutBtn) {
             if (itemCheckboxes.length === 0) {
-                createOrderBtn.disabled = true;
-                createOrderBtn.classList.add('disabled');
+                checkoutBtn.classList.add('disabled');
+                checkoutBtn.style.pointerEvents = 'none';
+                checkoutBtn.style.opacity = '0.5';
             } else {
-                createOrderBtn.disabled = false;
-                createOrderBtn.classList.remove('disabled');
+                checkoutBtn.classList.remove('disabled');
+                checkoutBtn.style.pointerEvents = 'auto';
+                checkoutBtn.style.opacity = '1';
             }
         }
     }

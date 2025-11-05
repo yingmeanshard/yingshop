@@ -32,6 +32,26 @@ public class Order {
     @Column(name = "payment_method", nullable = false, length = 32)
     private PaymentMethod paymentMethod = PaymentMethod.CASH_ON_DELIVERY;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_method", length = 32)
+    private DeliveryMethod deliveryMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_payment_method", length = 32)
+    private DeliveryPaymentMethod deliveryPaymentMethod;
+
+    @Column(name = "recipient_name", length = 100)
+    private String recipientName;
+
+    @Column(name = "recipient_phone", length = 20)
+    private String recipientPhone;
+
+    @Column(name = "recipient_email", length = 100)
+    private String recipientEmail;
+
+    @Column(name = "recipient_address", columnDefinition = "TEXT")
+    private String recipientAddress;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -112,5 +132,53 @@ public class Order {
         }
         item.setOrder(null);
         this.items.remove(item);
+    }
+
+    public String getRecipientName() {
+        return recipientName;
+    }
+
+    public void setRecipientName(String recipientName) {
+        this.recipientName = recipientName;
+    }
+
+    public String getRecipientPhone() {
+        return recipientPhone;
+    }
+
+    public void setRecipientPhone(String recipientPhone) {
+        this.recipientPhone = recipientPhone;
+    }
+
+    public String getRecipientAddress() {
+        return recipientAddress;
+    }
+
+    public void setRecipientAddress(String recipientAddress) {
+        this.recipientAddress = recipientAddress;
+    }
+
+    public DeliveryMethod getDeliveryMethod() {
+        return deliveryMethod;
+    }
+
+    public void setDeliveryMethod(DeliveryMethod deliveryMethod) {
+        this.deliveryMethod = deliveryMethod;
+    }
+
+    public String getRecipientEmail() {
+        return recipientEmail;
+    }
+
+    public void setRecipientEmail(String recipientEmail) {
+        this.recipientEmail = recipientEmail;
+    }
+
+    public DeliveryPaymentMethod getDeliveryPaymentMethod() {
+        return deliveryPaymentMethod;
+    }
+
+    public void setDeliveryPaymentMethod(DeliveryPaymentMethod deliveryPaymentMethod) {
+        this.deliveryPaymentMethod = deliveryPaymentMethod;
     }
 }
