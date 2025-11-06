@@ -541,4 +541,53 @@ public class AdminController {
         redirectAttributes.addFlashAttribute("successMessage", "已成功更新 " + updatedCount + " 個商品的庫存。");
         return "redirect:/admin/products";
     }
+
+    @PostMapping("/products/batch-update")
+    public String batchUpdateProducts(
+            @RequestParam("productIds") List<Long> productIds,
+            @RequestParam(value = "names", required = false) List<String> names,
+            @RequestParam(value = "categories", required = false) List<String> categories,
+            @RequestParam(value = "prices", required = false) List<java.math.BigDecimal> prices,
+            @RequestParam(value = "stocks", required = false) List<Integer> stocksAll,
+            @RequestParam(value = "listeds", required = false) List<Boolean> listeds,
+            RedirectAttributes redirectAttributes,
+            Authentication authentication) {
+        if (authentication == null || !authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return "redirect:/";
+        }
+        if (productIds == null || productIds.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "更新失敗：沒有收到商品資料。");
+            return "redirect:/admin/products";
+        }
+
+        int updatedCount = 0;
+        for (int i = 0; i < productIds.size(); i++) {
+            Long id = productIds.get(i);
+            Product product = productService.getProductById(id);
+            if (product == null) {
+                continue;
+            }
+            if (names != null && i < names.size() && names.get(i) != null) {
+                product.setName(names.get(i).trim());
+            }
+            if (categories != null && i < categories.size()) {
+                String cat = categories.get(i);
+                product.setCategory(cat == null ? null : cat.trim());
+            }
+            if (prices != null && i < prices.size() && prices.get(i) != null) {
+                product.setPrice(prices.get(i));
+            }
+            if (stocksAll != null && i < stocksAll.size() && stocksAll.get(i) != null) {
+                product.setStock(stocksAll.get(i));
+            }
+            if (listeds != null && i < listeds.size() && listeds.get(i) != null) {
+                product.setListed(listeds.get(i));
+            }
+            productService.saveProduct(product);
+            updatedCount++;
+        }
+        redirectAttributes.addFlashAttribute("successMessage", "已成功更新 " + updatedCount + " 個商品。");
+        return "redirect:/admin/products";
+    }
 }
