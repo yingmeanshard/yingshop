@@ -8,9 +8,13 @@ public interface ProductService {
 
     List<Product> getAllProducts();
 
+    List<Product> getListedProducts();
+
     Product getProductById(Long id);
 
     List<Product> getProductsByCategory(String category);
+
+    List<Product> getListedProductsByCategory(String category);
 
     void saveProduct(Product product);
 

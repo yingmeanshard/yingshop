@@ -191,6 +191,13 @@
                 <version>3.2.3</version>
                 <configuration>
                     <warSourceDirectory>src/main/webapp</warSourceDirectory>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                    <webResources>
+                        <resource>
+                            <directory>src/main/webapp/resources</directory>
+                            <targetPath>resources</targetPath>
+                        </resource>
+                    </webResources>
                 </configuration>
             </plugin>
         </plugins>

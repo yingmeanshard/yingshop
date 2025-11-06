@@ -8,9 +8,13 @@ public interface ProductDAO {
 
     List<Product> findAll();
 
+    List<Product> findListed();
+
     Product findById(Long id);
 
     List<Product> findByCategory(String category);
+
+    List<Product> findListedByCategory(String category);
 
     void save(Product product);
 

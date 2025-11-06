@@ -33,7 +33,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .antMatchers("/resources/**", "/login", "/register", "/users/request-reset", "/users/reset").permitAll()
+                        .antMatchers("/resources/**", "/login", "/register", "/users/request-reset", "/users/reset", "/", "/products", "/products/**").permitAll()
                         .antMatchers("/admin/products/stock/**").hasAnyRole("ADMIN", "STAFF")
                         .antMatchers("/admin/orders/*/status").hasAnyRole("ADMIN", "STAFF")
                         .antMatchers("/admin/**", "/products/create", "/products/edit/**", "/products/delete/**", "/users/**").hasRole("ADMIN")

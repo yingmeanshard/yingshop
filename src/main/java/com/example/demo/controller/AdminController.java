@@ -1,12 +1,16 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.Product;
+import com.example.demo.model.ProductImage;
+import com.example.demo.service.FileUploadService;
+import com.example.demo.service.ProductImageService;
 import com.example.demo.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Comparator;
@@ -19,6 +23,12 @@ public class AdminController {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private FileUploadService fileUploadService;
+
+    @Autowired
+    private ProductImageService productImageService;
 
     @GetMapping
     public String adminDashboard(Authentication authentication) {
@@ -143,13 +153,60 @@ public class AdminController {
     }
 
     @PostMapping("/products/create")
-    public String createProduct(@ModelAttribute Product product, RedirectAttributes redirectAttributes, Authentication authentication) {
+    public String createProduct(@ModelAttribute Product product,
+                                 @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+                                 @RequestParam(value = "imageFiles", required = false) List<MultipartFile> imageFiles,
+                                 @RequestParam(value = "coverImageIndex", required = false) Integer coverImageIndex,
+                                 RedirectAttributes redirectAttributes,
+                                 Authentication authentication) {
         if (authentication == null || !authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
             return "redirect:/";
         }
-        productService.saveProduct(product);
-        redirectAttributes.addFlashAttribute("successMessage", "商品已建立。");
+        
+        try {
+            // 先保存商品以获取ID
+            productService.saveProduct(product);
+            
+            // 處理多圖片上傳（優先）
+            if (imageFiles != null && !imageFiles.isEmpty()) {
+                List<String> imageUrls = fileUploadService.uploadProductImages(imageFiles, product.getId());
+                int order = 0;
+                for (String imageUrl : imageUrls) {
+                    ProductImage productImage = new ProductImage();
+                    productImage.setProduct(product);
+                    productImage.setImageUrl(imageUrl);
+                    productImage.setDisplayOrder(order++);
+                    productImage.setIsCover(order == 1 && (coverImageIndex == null || coverImageIndex == 0));
+                    productImageService.saveProductImage(productImage);
+                }
+                // 設置第一張圖片為封面（如果沒有指定）
+                if (!imageUrls.isEmpty() && (coverImageIndex == null || coverImageIndex == 0)) {
+                    product.setImageUrl(imageUrls.get(0));
+                    productService.saveProduct(product);
+                }
+            } else if (imageFile != null && !imageFile.isEmpty()) {
+                // 單圖片上傳（向後兼容）
+                String imagePath = fileUploadService.uploadProductImage(imageFile, product.getId());
+                if (imagePath != null) {
+                    product.setImageUrl(imagePath);
+                    productService.saveProduct(product);
+                    
+                    // 同時創建ProductImage記錄
+                    ProductImage productImage = new ProductImage();
+                    productImage.setProduct(product);
+                    productImage.setImageUrl(imagePath);
+                    productImage.setIsCover(true);
+                    productImage.setDisplayOrder(0);
+                    productImageService.saveProductImage(productImage);
+                }
+            }
+            
+            redirectAttributes.addFlashAttribute("successMessage", "商品已建立。");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "建立商品時發生錯誤：" + e.getMessage());
+        }
+        
         return "redirect:/admin/products";
     }
 
@@ -171,7 +228,11 @@ public class AdminController {
                 .distinct()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .collect(Collectors.toList());
+        
+        // 載入商品圖片
+        List<ProductImage> images = productImageService.getImagesByProductId(id);
         model.addAttribute("product", product);
+        model.addAttribute("images", images);
         model.addAttribute("formTitle", "編輯商品");
         model.addAttribute("isEdit", true);
         model.addAttribute("categories", categories);
@@ -179,14 +240,126 @@ public class AdminController {
     }
 
     @PostMapping("/products/edit/{id}")
-    public String updateProduct(@PathVariable Long id, @ModelAttribute Product product, RedirectAttributes redirectAttributes, Authentication authentication) {
+    public String updateProduct(@PathVariable Long id,
+                                @ModelAttribute Product product,
+                                @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+                                @RequestParam(value = "imageFiles", required = false) List<MultipartFile> imageFiles,
+                                @RequestParam(value = "coverImageIndex", required = false) Integer coverImageIndex,
+                                @RequestParam(value = "deleteImageIds", required = false) List<Long> deleteImageIds,
+                                RedirectAttributes redirectAttributes,
+                                Authentication authentication) {
         if (authentication == null || !authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
             return "redirect:/";
         }
-        product.setId(id);
-        productService.saveProduct(product);
-        redirectAttributes.addFlashAttribute("successMessage", "商品已更新。");
+        
+        try {
+            Product existingProduct = productService.getProductById(id);
+            if (existingProduct == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "找不到指定的商品。");
+                return "redirect:/admin/products";
+            }
+            
+            product.setId(id);
+            
+            // 刪除指定的圖片
+            if (deleteImageIds != null && !deleteImageIds.isEmpty()) {
+                for (Long imageId : deleteImageIds) {
+                    ProductImage img = productImageService.getProductImageById(imageId);
+                    if (img != null) {
+                        try {
+                            fileUploadService.deleteProductImage(img.getImageUrl());
+                        } catch (Exception e) {
+                            // 忽略刪除錯誤
+                        }
+                        productImageService.deleteProductImage(imageId);
+                    }
+                }
+            }
+            
+            // 處理多圖片上傳（優先）
+            if (imageFiles != null && !imageFiles.isEmpty()) {
+                List<String> imageUrls = fileUploadService.uploadProductImages(imageFiles, id);
+                List<ProductImage> existingImages = productImageService.getImagesByProductId(id);
+                int maxOrder = existingImages.stream()
+                        .mapToInt(img -> img.getDisplayOrder() != null ? img.getDisplayOrder() : 0)
+                        .max()
+                        .orElse(-1);
+                
+                int order = maxOrder + 1;
+                for (String imageUrl : imageUrls) {
+                    ProductImage productImage = new ProductImage();
+                    productImage.setProduct(existingProduct);
+                    productImage.setImageUrl(imageUrl);
+                    productImage.setDisplayOrder(order++);
+                    productImage.setIsCover(false);
+                    productImageService.saveProductImage(productImage);
+                }
+                
+                // 設置封面圖片
+                if (coverImageIndex != null && coverImageIndex >= 0) {
+                    List<ProductImage> allImages = productImageService.getImagesByProductId(id);
+                    for (int i = 0; i < allImages.size(); i++) {
+                        ProductImage img = allImages.get(i);
+                        img.setIsCover(i == coverImageIndex);
+                        productImageService.saveProductImage(img);
+                    }
+                    if (coverImageIndex < allImages.size()) {
+                        product.setImageUrl(allImages.get(coverImageIndex).getImageUrl());
+                    }
+                } else {
+                    // 如果沒有指定封面，使用第一張圖片
+                    List<ProductImage> allImages = productImageService.getImagesByProductId(id);
+                    if (!allImages.isEmpty()) {
+                        ProductImage firstImage = allImages.get(0);
+                        firstImage.setIsCover(true);
+                        productImageService.saveProductImage(firstImage);
+                        product.setImageUrl(firstImage.getImageUrl());
+                    }
+                }
+            } else if (imageFile != null && !imageFile.isEmpty()) {
+                // 單圖片上傳（向後兼容）
+                // 刪除舊圖片（如果存在）
+                if (existingProduct.getImageUrl() != null && existingProduct.getImageUrl().startsWith("/resources/images/products/")) {
+                    try {
+                        fileUploadService.deleteProductImage(existingProduct.getImageUrl());
+                    } catch (Exception e) {
+                        // 忽略删除旧图片的错误
+                    }
+                }
+                
+                // 上传新图片
+                String imagePath = fileUploadService.uploadProductImage(imageFile, id);
+                if (imagePath != null) {
+                    product.setImageUrl(imagePath);
+                    
+                    // 更新或創建ProductImage記錄
+                    List<ProductImage> existingImages = productImageService.getImagesByProductId(id);
+                    if (!existingImages.isEmpty()) {
+                        ProductImage firstImage = existingImages.get(0);
+                        firstImage.setImageUrl(imagePath);
+                        firstImage.setIsCover(true);
+                        productImageService.saveProductImage(firstImage);
+                    } else {
+                        ProductImage productImage = new ProductImage();
+                        productImage.setProduct(existingProduct);
+                        productImage.setImageUrl(imagePath);
+                        productImage.setIsCover(true);
+                        productImage.setDisplayOrder(0);
+                        productImageService.saveProductImage(productImage);
+                    }
+                }
+            } else {
+                // 如果没有上传新图片，保留原有图片URL
+                product.setImageUrl(existingProduct.getImageUrl());
+            }
+            
+            productService.saveProduct(product);
+            redirectAttributes.addFlashAttribute("successMessage", "商品已更新。");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "更新商品時發生錯誤：" + e.getMessage());
+        }
+        
         return "redirect:/admin/products";
     }
 

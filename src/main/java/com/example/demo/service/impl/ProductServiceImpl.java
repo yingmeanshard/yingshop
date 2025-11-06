@@ -22,6 +22,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public List<Product> getListedProducts() {
+        return productDAO.findListed();
+    }
+
+    @Override
     public Product getProductById(Long id) {
         return productDAO.findById(id);
     }
@@ -32,6 +37,14 @@ public class ProductServiceImpl implements ProductService {
             return productDAO.findAll();
         }
         return productDAO.findByCategory(category);
+    }
+
+    @Override
+    public List<Product> getListedProductsByCategory(String category) {
+        if (category == null || category.isBlank()) {
+            return productDAO.findListed();
+        }
+        return productDAO.findListedByCategory(category);
     }
 
     @Override

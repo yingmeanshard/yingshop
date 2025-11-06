@@ -45,7 +45,7 @@
                 </div>
                 <div class="card-body">
                     <form th:action="${isEdit} ? @{/admin/products/edit/{id}(id=${product.id})} : @{/admin/products/create}" 
-                          th:object="${product}" method="post" class="row g-3">
+                          th:object="${product}" method="post" enctype="multipart/form-data" class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label" for="name">名稱 <span class="text-danger">*</span></label>
                             <input id="name" type="text" class="form-control" th:field="*{name}" required />
@@ -73,10 +73,6 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label" for="imageUrl">圖片網址</label>
-                            <input id="imageUrl" type="url" class="form-control" th:field="*{imageUrl}" placeholder="https://example.com/image.jpg" />
-                        </div>
-                        <div class="col-md-6">
                             <label class="form-label" for="stock">庫存 <span class="text-danger">*</span></label>
                             <input id="stock" type="number" min="0" class="form-control" th:field="*{stock}" required />
                         </div>
@@ -86,6 +82,60 @@
                                 <option th:value="true" th:selected="${product != null && product.listed == true}">已上架</option>
                                 <option th:value="false" th:selected="${product != null && product.listed == false}">已下架</option>
                             </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">上傳商品圖片（可多選）</label>
+                            <input type="file" class="form-control" id="imageFiles" name="imageFiles" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" multiple />
+                            <small class="text-muted">支援 JPG、PNG、GIF、WEBP 格式，單個檔案最大 5MB</small>
+                            <div id="imagePreview" class="mt-3 row g-2"></div>
+                            <input type="hidden" id="coverImageIndex" name="coverImageIndex" value="0" />
+                        </div>
+                        
+                        <!-- 現有圖片管理（編輯模式） -->
+                        <div class="col-12" th:if="${isEdit && images != null && !images.isEmpty()}">
+                            <label class="form-label">現有圖片</label>
+                            <div class="row g-2" id="existingImages">
+                                <div class="col-md-3 col-sm-4 col-6" th:each="img, iterStat : ${images}">
+                                    <div class="card position-relative">
+                                        <img th:src="${img.imageUrl}" 
+                                             th:alt="${product.name}" 
+                                             class="card-img-top" 
+                                             style="height: 150px; object-fit: cover; cursor: pointer;"
+                                             th:onclick="'setCoverImage(' + ${iterStat.index} + ')'" />
+                                        <div class="card-body p-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" 
+                                                       th:id="'cover_' + ${img.id}"
+                                                       th:name="coverImageIndex" 
+                                                       th:value="${iterStat.index}"
+                                                       th:checked="${img.isCover == true}"
+                                                       onchange="updateCoverImageIndex(this.value)" />
+                                                <label class="form-check-label small" th:for="'cover_' + ${img.id}">設為封面</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input delete-image-checkbox" type="checkbox" 
+                                                       th:id="'delete_' + ${img.id}"
+                                                       th:name="deleteImageIds" 
+                                                       th:value="${img.id}" />
+                                                <label class="form-check-label small text-danger" th:for="'delete_' + ${img.id}">刪除</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 單圖片上傳（向後兼容） -->
+                        <div class="col-12">
+                            <label class="form-label">單圖片上傳（選填，向後兼容）</label>
+                            <input type="file" class="form-control" id="imageFile" name="imageFile" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" />
+                            <small class="text-muted">如果使用多圖片上傳，此欄位將被忽略</small>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label" for="imageUrl">圖片網址（選填，可替代上傳）</label>
+                            <input id="imageUrl" type="url" class="form-control" th:field="*{imageUrl}" placeholder="https://example.com/image.jpg" />
+                            <small class="text-muted">如果上傳圖片，此欄位將被覆蓋</small>
                         </div>
                         <div class="col-12">
                             <label class="form-label" for="description">描述</label>
@@ -132,7 +182,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         var categoryInput = document.getElementById('category');
         var categorySelect = document.getElementById('categorySelect');
-        if (categoryInput.value) {
+        if (categoryInput && categorySelect && categoryInput.value) {
             var options = categorySelect.options;
             for (var i = 0; i < options.length; i++) {
                 if (options[i].value === categoryInput.value) {
@@ -140,6 +190,88 @@
                     break;
                 }
             }
+        }
+        
+        // 圖片預覽功能
+        var imageFilesInput = document.getElementById('imageFiles');
+        if (imageFilesInput) {
+            imageFilesInput.addEventListener('change', function(e) {
+                var preview = document.getElementById('imagePreview');
+                preview.innerHTML = '';
+                var files = e.target.files;
+                var coverIndex = 0;
+                
+                for (var i = 0; i < files.length; i++) {
+                    var file = files[i];
+                    if (file.type.startsWith('image/')) {
+                        var reader = new FileReader();
+                        reader.onload = (function(index) {
+                            return function(e) {
+                                var div = document.createElement('div');
+                                div.className = 'col-md-3 col-sm-4 col-6';
+                                div.innerHTML = '<div class="card position-relative">' +
+                                    '<img src="' + e.target.result + '" class="card-img-top" style="height: 150px; object-fit: cover; cursor: pointer;" onclick="setCoverImage(' + index + ')" />' +
+                                    '<div class="card-body p-2">' +
+                                    '<div class="form-check">' +
+                                    '<input class="form-check-input" type="radio" name="newCoverImageIndex" value="' + index + '" ' + (index === 0 ? 'checked' : '') + ' onchange="updateCoverImageIndex(this.value)" />' +
+                                    '<label class="form-check-label small">設為封面</label>' +
+                                    '</div>' +
+                                    '</div>' +
+                                    '</div>';
+                                preview.appendChild(div);
+                            };
+                        })(i);
+                        reader.readAsDataURL(file);
+                    }
+                }
+            });
+        }
+    });
+    
+    var coverImageIndex = 0;
+    var existingImagesCount = 0;
+    
+    function setCoverImage(index) {
+        coverImageIndex = index;
+        document.getElementById('coverImageIndex').value = index;
+        // 更新所有radio按鈕
+        document.querySelectorAll('input[name="newCoverImageIndex"]').forEach(function(radio) {
+            radio.checked = (radio.value == index);
+        });
+        document.querySelectorAll('input[name="coverImageIndex"]').forEach(function(radio) {
+            if (radio.value == index) {
+                radio.checked = true;
+            }
+        });
+    }
+    
+    function updateCoverImageIndex(value) {
+        coverImageIndex = parseInt(value);
+        document.getElementById('coverImageIndex').value = value;
+    }
+    
+    // 在表單提交前，處理封面圖片索引
+    document.addEventListener('DOMContentLoaded', function() {
+        var form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // 計算現有圖片數量
+                var existingImages = document.querySelectorAll('#existingImages .card').length;
+                existingImagesCount = existingImages;
+                
+                // 處理新上傳圖片的封面索引
+                var newCoverRadio = document.querySelector('input[name="newCoverImageIndex"]:checked');
+                if (newCoverRadio) {
+                    var newCoverIndex = parseInt(newCoverRadio.value);
+                    document.getElementById('coverImageIndex').value = existingImagesCount + newCoverIndex;
+                } else {
+                    // 如果沒有新圖片，使用現有圖片的封面索引
+                    var existingCoverRadio = document.querySelector('input[name="coverImageIndex"]:checked');
+                    if (existingCoverRadio) {
+                        document.getElementById('coverImageIndex').value = existingCoverRadio.value;
+                    }
+                }
+            });
         }
     });
 </script>

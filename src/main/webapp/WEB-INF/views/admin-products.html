@@ -217,7 +217,7 @@
                             </td>
                             <td>
                                 <img th:if="${!#strings.isEmpty(product.imageUrl)}" 
-                                     th:src="${product.imageUrl}" 
+                                     th:src="${#strings.startsWith(product.imageUrl, '/resources/') ? #httpServletRequest.contextPath + product.imageUrl : product.imageUrl}" 
                                      th:alt="${product.name}" 
                                      style="max-width: 80px; max-height: 80px; object-fit: cover;"
                                      class="img-thumbnail">

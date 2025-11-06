@@ -70,16 +70,47 @@
 <div class="card shadow-sm">
         <div class="row g-0 align-items-center">
             <div class="col-lg-5 p-4 border-end">
-                <div class="ratio ratio-4x3 bg-light rounded">
-                    <img th:if="${!#strings.isEmpty(product.imageUrl)}" th:src="${product.imageUrl}" th:alt="${product.name}" class="object-fit-cover rounded">
-                    <div th:if="${#strings.isEmpty(product.imageUrl)}" class="d-flex align-items-center justify-content-center text-muted" th:text="#{products.no.image}">
+                <!-- 主圖片顯示 -->
+                <div class="ratio ratio-4x3 bg-light rounded mb-3">
+                    <img id="mainImage" 
+                         th:if="${images != null && !images.isEmpty()}" 
+                         th:src="${#strings.startsWith(images[0].imageUrl, '/resources/') ? #httpServletRequest.contextPath + images[0].imageUrl : images[0].imageUrl}" 
+                         th:alt="${product.name}" 
+                         class="object-fit-cover rounded"
+                         style="cursor: pointer;"
+                         data-bs-toggle="modal" 
+                         data-bs-target="#imageModal" />
+                    <img th:if="${(images == null || images.isEmpty()) && !#strings.isEmpty(product.imageUrl)}" 
+                         th:src="${#strings.startsWith(product.imageUrl, '/resources/') ? #httpServletRequest.contextPath + product.imageUrl : product.imageUrl}" 
+                         th:alt="${product.name}" 
+                         class="object-fit-cover rounded" />
+                    <div th:if="${(images == null || images.isEmpty()) && #strings.isEmpty(product.imageUrl)}" 
+                         class="d-flex align-items-center justify-content-center text-muted" 
+                         th:text="#{products.no.image}">
                         暫無圖片
                     </div>
                 </div>
-           </div>
+                
+                <!-- 圖片縮圖列表 -->
+                <div th:if="${images != null && !images.isEmpty() && images.size() > 1}" class="row g-2">
+                    <div class="col-3" th:each="img, iterStat : ${images}">
+                        <img th:src="${#strings.startsWith(img.imageUrl, '/resources/') ? #httpServletRequest.contextPath + img.imageUrl : img.imageUrl}" 
+                             th:alt="${product.name}" 
+                             class="img-thumbnail" 
+                             style="width: 100%; height: 80px; object-fit: cover; cursor: pointer;"
+                             th:onclick="'changeMainImage(\'' + (#strings.startsWith(img.imageUrl, '/resources/') ? #httpServletRequest.contextPath + img.imageUrl : img.imageUrl) + '\')'" />
+
+                    </div>
+                </div>
+            </div>
             <div class="col-lg-7 p-4">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h1 class="h3 mb-0" th:text="${product.name}">商品詳情</h1>
+                    <div>
+                        <h1 class="h3 mb-0 d-inline-block" th:text="${product.name}">商品詳情</h1>
+                        <span th:if="${product.listed == null || !product.listed}" 
+                              sec:authorize="hasRole('ADMIN')" 
+                              class="badge bg-secondary ms-2">已下架</span>
+                    </div>
                     <div class="btn-group">
                         <a class="btn btn-outline-secondary" th:href="@{'/products/edit/' + ${product.id}}"
                            sec:authorize="hasRole('ADMIN')" th:text="#{common.edit}">編輯</a>
@@ -107,8 +138,80 @@
     </div>     
     </main>
 
+<!-- 圖片放大Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel" th:text="${product.name}">商品圖片</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="" class="img-fluid" />
+            </div>
+            <div class="modal-footer" th:if="${images != null && !images.isEmpty() && images.size() > 1}">
+                <button type="button" class="btn btn-secondary" onclick="previousImage()">上一張</button>
+                <span id="imageCounter" class="mx-2"></span>
+                <button type="button" class="btn btn-secondary" onclick="nextImage()">下一張</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
+    var currentImageIndex = 0;
+    var images = /*[[${images}]]*/ [];
+    
+    function changeMainImage(imageUrl) {
+        document.getElementById('mainImage').src = imageUrl;
+        // 找到對應的索引
+        for (var i = 0; i < images.length; i++) {
+            if (images[i].imageUrl === imageUrl) {
+                currentImageIndex = i;
+                break;
+            }
+        }
+    }
+    
+    function previousImage() {
+        if (images.length > 0) {
+            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+            updateModalImage();
+        }
+    }
+    
+    function nextImage() {
+        if (images.length > 0) {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            updateModalImage();
+        }
+    }
+    
+    function updateModalImage() {
+        if (images.length > 0 && images[currentImageIndex]) {
+            document.getElementById('modalImage').src = images[currentImageIndex].imageUrl;
+            document.getElementById('imageCounter').textContent = (currentImageIndex + 1) + ' / ' + images.length;
+        }
+    }
+    
+    // 當Modal顯示時，設置當前圖片
+    var imageModal = document.getElementById('imageModal');
+    if (imageModal) {
+        imageModal.addEventListener('show.bs.modal', function() {
+            if (images.length > 0) {
+                var mainImageSrc = document.getElementById('mainImage').src;
+                for (var i = 0; i < images.length; i++) {
+                    if (mainImageSrc.includes(images[i].imageUrl)) {
+                        currentImageIndex = i;
+                        break;
+                    }
+                }
+                updateModalImage();
+            }
+        });
+    }
+    
     document.addEventListener('DOMContentLoaded', function () {
         // 語言切換處理
         document.querySelectorAll('.lang-switch').forEach(function (link) {

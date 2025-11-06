@@ -26,6 +26,14 @@ public class ProductDAOImpl implements ProductDAO {
     }
 
     @Override
+    public List<Product> findListed() {
+        Query<Product> query = getCurrentSession()
+                .createQuery("from Product where listed = :listed", Product.class);
+        query.setParameter("listed", true);
+        return query.list();
+    }
+
+    @Override
     public Product findById(Long id) {
         return getCurrentSession().get(Product.class, id);
     }
@@ -35,6 +43,15 @@ public class ProductDAOImpl implements ProductDAO {
         Query<Product> query = getCurrentSession()
                 .createQuery("from Product where category = :category", Product.class);
         query.setParameter("category", category);
+        return query.list();
+    }
+
+    @Override
+    public List<Product> findListedByCategory(String category) {
+        Query<Product> query = getCurrentSession()
+                .createQuery("from Product where category = :category and listed = :listed", Product.class);
+        query.setParameter("category", category);
+        query.setParameter("listed", true);
         return query.list();
     }
 

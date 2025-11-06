@@ -2,6 +2,8 @@ package com.example.demo.model;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -31,6 +33,9 @@ public class Product {
 
     @Column(nullable = false)
     private Boolean listed = true;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ProductImage> images = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -94,5 +99,27 @@ public class Product {
 
     public void setListed(Boolean listed) {
         this.listed = listed == null ? true : listed;
+    }
+
+    public List<ProductImage> getImages() {
+        return images;
+    }
+
+    public void setImages(List<ProductImage> images) {
+        this.images = images == null ? new ArrayList<>() : images;
+    }
+
+    /**
+     * 獲取封面圖片URL，如果沒有封面則返回第一張圖片，如果沒有圖片則返回imageUrl
+     */
+    public String getCoverImageUrl() {
+        if (images != null && !images.isEmpty()) {
+            ProductImage coverImage = images.stream()
+                    .filter(img -> img.getIsCover() != null && img.getIsCover())
+                    .findFirst()
+                    .orElse(images.get(0));
+            return coverImage.getImageUrl();
+        }
+        return imageUrl;
     }
 }

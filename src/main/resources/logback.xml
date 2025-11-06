@@ -27,6 +27,9 @@
 
     <!-- 想看 service 細節就把 yingshop.service 調成 DEBUG -->
     <logger name="yingshop.service" level="DEBUG"/>
+    
+    <!-- 專門記錄 FileUploadService 的日誌 -->
+    <logger name="com.example.demo.service.impl.FileUploadServiceImpl" level="INFO"/>
 
     <!-- 全域層級 -->
     <root level="INFO">
