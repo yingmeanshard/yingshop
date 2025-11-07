@@ -70,6 +70,9 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
+        // 檢查庫存並驗證訂單商品
+        validateAndReserveStock(cart);
+
         BigDecimal total = BigDecimal.ZERO;
         boolean hasOrderItems = false;
         for (CartItem cartItem : cart.getSelectedItems()) {
@@ -95,6 +98,9 @@ public class OrderServiceImpl implements OrderService {
         }
 
         orderDAO.save(order);
+
+        // 扣除庫存
+        deductStock(cart);
 
         return order;
     }
@@ -129,6 +135,9 @@ public class OrderServiceImpl implements OrderService {
         order.setRecipientAddress(recipientAddress);
         order.setCreatedAt(LocalDateTime.now());
 
+        // 檢查庫存並驗證訂單商品
+        validateAndReserveStock(cart);
+
         BigDecimal total = BigDecimal.ZERO;
         boolean hasOrderItems = false;
         for (CartItem cartItem : cart.getSelectedItems()) {
@@ -154,6 +163,9 @@ public class OrderServiceImpl implements OrderService {
         }
 
         orderDAO.save(order);
+
+        // 扣除庫存
+        deductStock(cart);
 
         return order;
     }
@@ -194,6 +206,9 @@ public class OrderServiceImpl implements OrderService {
         order.setRecipientAddress(recipientAddress);
         order.setCreatedAt(LocalDateTime.now());
 
+        // 檢查庫存並驗證訂單商品
+        validateAndReserveStock(cart);
+
         BigDecimal total = BigDecimal.ZERO;
         boolean hasOrderItems = false;
         for (CartItem cartItem : cart.getSelectedItems()) {
@@ -219,6 +234,9 @@ public class OrderServiceImpl implements OrderService {
         }
 
         orderDAO.save(order);
+
+        // 扣除庫存
+        deductStock(cart);
 
         return order;
     }
@@ -299,6 +317,47 @@ public class OrderServiceImpl implements OrderService {
                 return nextStatus == OrderStatus.SHIPPED;
             default:
                 return false;
+        }
+    }
+
+    /**
+     * 檢查庫存是否足夠，如果不足則拋出異常
+     */
+    private void validateAndReserveStock(Cart cart) {
+        for (CartItem cartItem : cart.getSelectedItems()) {
+            if (cartItem.getQuantity() <= 0) {
+                continue;
+            }
+            Product product = productDAO.findById(cartItem.getProductId());
+            if (product == null) {
+                throw new IllegalArgumentException("找不到商品 ID: " + cartItem.getProductId());
+            }
+            int requestedQuantity = cartItem.getQuantity();
+            int availableStock = product.getStock() == null ? 0 : product.getStock();
+            if (requestedQuantity > availableStock) {
+                throw new IllegalArgumentException(
+                    String.format("庫存不足，無法成立訂單。商品「%s」目前庫存：%d，訂購數量：%d",
+                        product.getName(), availableStock, requestedQuantity)
+                );
+            }
+        }
+    }
+
+    /**
+     * 扣除庫存
+     */
+    private void deductStock(Cart cart) {
+        for (CartItem cartItem : cart.getSelectedItems()) {
+            if (cartItem.getQuantity() <= 0) {
+                continue;
+            }
+            Product product = productDAO.findById(cartItem.getProductId());
+            if (product != null) {
+                int currentStock = product.getStock() == null ? 0 : product.getStock();
+                int newStock = currentStock - cartItem.getQuantity();
+                product.setStock(Math.max(0, newStock));
+                productDAO.save(product);
+            }
         }
     }
 }

@@ -44,6 +44,7 @@ public class OrderServiceImplTest {
         product.setId(1L);
         product.setName("測試商品");
         product.setPrice(BigDecimal.valueOf(120));
+        product.setStock(10); // 設置足夠的庫存
 
         when(productDAO.findById(1L)).thenReturn(product);
         doAnswer(invocation -> {
@@ -51,6 +52,8 @@ public class OrderServiceImplTest {
             savedOrder.setId(99L);
             return null;
         }).when(orderDAO).save(any(Order.class));
+        // Mock productDAO.save 用於庫存扣除
+        doNothing().when(productDAO).save(any(Product.class));
 
         Order order = orderService.createOrder(cart, user, PaymentMethod.CASH_ON_DELIVERY);
 
@@ -63,6 +66,8 @@ public class OrderServiceImplTest {
         assertEquals(Long.valueOf(99L), order.getId());
 
         verify(orderDAO).save(order);
+        // 驗證庫存扣除邏輯被調用
+        verify(productDAO, atLeastOnce()).save(any(Product.class));
         OrderItem savedItem = order.getItems().get(0);
         assertEquals(2, savedItem.getQuantity());
         assertEquals(product, savedItem.getProduct());
@@ -91,5 +96,25 @@ public class OrderServiceImplTest {
         when(orderDAO.findById(2L)).thenReturn(order);
 
         orderService.updateStatus(2L, OrderStatus.SHIPPED);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateOrderInsufficientStock() {
+        Cart cart = new Cart();
+        cart.getItems().put(1L, new CartItem(1L, "測試商品", BigDecimal.valueOf(120), 5));
+
+        User user = new User();
+        user.setId(5L);
+
+        Product product = new Product();
+        product.setId(1L);
+        product.setName("測試商品");
+        product.setPrice(BigDecimal.valueOf(120));
+        product.setStock(2); // 庫存只有 2，但訂購數量是 5
+
+        when(productDAO.findById(1L)).thenReturn(product);
+
+        // 應該拋出 IllegalArgumentException，因為庫存不足
+        orderService.createOrder(cart, user, PaymentMethod.CASH_ON_DELIVERY);
     }
 }
